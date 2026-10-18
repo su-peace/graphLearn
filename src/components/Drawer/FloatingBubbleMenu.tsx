@@ -1,6 +1,6 @@
 // components/Drawer/FloatingBubbleMenu.tsx
 import React, { useState } from 'react';
-import { Sprout, Lightbulb, Zap, Edit3, X, Sparkles } from 'lucide-react';
+import { HelpCircle, FileText, Cpu, Edit3, X } from 'lucide-react';
 import { useCanvasStore } from '../../store/canvasStore';
 
 interface FloatingBubbleMenuProps {
@@ -25,7 +25,7 @@ export const FloatingBubbleMenu: React.FC<FloatingBubbleMenuProps> = ({
   const handleAction = async (type: 'concept' | 'example' | 'principle' | 'custom') => {
     if (type === 'custom' && !isCustomMode) {
       setIsCustomMode(true);
-      setCustomPrompt(`针对「${selectedText}」，探讨其在真实工程系统中的实现细节、边界条件与避坑指南`);
+      setCustomPrompt(`针对「${selectedText}」，探讨其在真实工程系统中的实现细节、边界条件与权衡`);
       return;
     }
 
@@ -48,7 +48,7 @@ export const FloatingBubbleMenu: React.FC<FloatingBubbleMenuProps> = ({
   };
 
   const previewSnippet =
-    selectedText.length > 28 ? selectedText.slice(0, 28) + '...' : selectedText;
+    selectedText.length > 26 ? selectedText.slice(0, 26) + '...' : selectedText;
 
   return (
     <div
@@ -60,14 +60,13 @@ export const FloatingBubbleMenu: React.FC<FloatingBubbleMenuProps> = ({
         // 防止点击浮动气泡时浏览器清除光标文本选区
         e.stopPropagation();
       }}
-      className="floating-bubble-menu fixed z-50 transform -translate-x-1/2 -translate-y-full mb-3 bg-slate-900/95 border border-indigo-500/50 rounded-2xl shadow-2xl backdrop-blur-xl p-2 flex flex-col gap-1.5 animate-in fade-in zoom-in-95 duration-150 select-none text-xs text-slate-200 ring-1 ring-white/10"
+      className="floating-bubble-menu fixed z-50 transform -translate-x-1/2 -translate-y-full mb-3 glass-elevated rounded-2xl shadow-xl p-2 flex flex-col gap-1.5 animate-in fade-in zoom-in-95 duration-150 select-none text-xs text-[var(--text-1)]"
     >
-      {/* 顶部选中文本小徽章 */}
-      <div className="flex items-center justify-between gap-2 px-1 text-[11px] text-slate-400 border-b border-slate-800/60 pb-1.5 mb-0.5">
+      {/* 顶部选中文本微徽章 */}
+      <div className="flex items-center justify-between gap-2 px-1 text-[11px] text-[var(--text-3)] border-b border-[var(--line-subtle)] pb-1 mb-0.5">
         <div className="flex items-center gap-1.5 truncate max-w-[260px]">
-          <Sparkles className="w-3 h-3 text-sky-400 shrink-0" />
-          <span className="text-slate-400 shrink-0">已选:</span>
-          <span className="font-semibold text-sky-300 truncate font-mono">“{previewSnippet}”</span>
+          <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent-focus)] shrink-0" />
+          <span className="truncate font-mono">“{previewSnippet}”</span>
         </div>
         <button
           onClick={onClose}
@@ -76,10 +75,10 @@ export const FloatingBubbleMenu: React.FC<FloatingBubbleMenuProps> = ({
             e.stopPropagation();
           }}
           type="button"
-          className="p-0.5 rounded text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition-colors"
+          className="p-0.5 rounded text-[var(--text-3)] hover:text-[var(--text-1)] transition-colors cursor-pointer"
           title="关闭"
         >
-          <X className="w-3.5 h-3.5" />
+          <X className="w-3.5 h-3.5" strokeWidth={1.6} />
         </button>
       </div>
 
@@ -92,10 +91,10 @@ export const FloatingBubbleMenu: React.FC<FloatingBubbleMenuProps> = ({
               e.stopPropagation();
             }}
             type="button"
-            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-emerald-950/80 border border-emerald-500/50 text-emerald-300 hover:bg-emerald-900 hover:text-emerald-100 font-medium transition-all shadow-sm active:scale-95 cursor-pointer"
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-[var(--surface-2)] hover:bg-[var(--surface-3)] text-[var(--text-1)] font-medium transition-all shadow-sm active:scale-95 cursor-pointer"
           >
-            <Sprout className="w-3.5 h-3.5 text-emerald-400" />
-            <span>🌱 追问此概念</span>
+            <HelpCircle className="w-3.5 h-3.5 text-[var(--text-2)]" strokeWidth={1.6} />
+            <span>追问概念</span>
           </button>
 
           <button
@@ -105,10 +104,10 @@ export const FloatingBubbleMenu: React.FC<FloatingBubbleMenuProps> = ({
               e.stopPropagation();
             }}
             type="button"
-            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-amber-950/80 border border-amber-500/50 text-amber-300 hover:bg-amber-900 hover:text-amber-100 font-medium transition-all shadow-sm active:scale-95 cursor-pointer"
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-[var(--surface-2)] hover:bg-[var(--surface-3)] text-[var(--text-1)] font-medium transition-all shadow-sm active:scale-95 cursor-pointer"
           >
-            <Lightbulb className="w-3.5 h-3.5 text-amber-400" />
-            <span>💡 举例阐述</span>
+            <FileText className="w-3.5 h-3.5 text-[var(--text-2)]" strokeWidth={1.6} />
+            <span>举例阐述</span>
           </button>
 
           <button
@@ -118,10 +117,10 @@ export const FloatingBubbleMenu: React.FC<FloatingBubbleMenuProps> = ({
               e.stopPropagation();
             }}
             type="button"
-            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-violet-950/80 border border-violet-500/50 text-violet-300 hover:bg-violet-900 hover:text-violet-100 font-medium transition-all shadow-sm active:scale-95 cursor-pointer"
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-[var(--surface-2)] hover:bg-[var(--surface-3)] text-[var(--text-1)] font-medium transition-all shadow-sm active:scale-95 cursor-pointer"
           >
-            <Zap className="w-3.5 h-3.5 text-violet-400" />
-            <span>⚡ 核心原理</span>
+            <Cpu className="w-3.5 h-3.5 text-[var(--text-2)]" strokeWidth={1.6} />
+            <span>底层机理</span>
           </button>
 
           <button
@@ -131,32 +130,32 @@ export const FloatingBubbleMenu: React.FC<FloatingBubbleMenuProps> = ({
               e.stopPropagation();
             }}
             type="button"
-            className="flex items-center gap-1 px-2 py-1.5 rounded-lg bg-slate-800 border border-slate-700 text-slate-300 hover:bg-slate-700 hover:text-white font-medium transition-all shadow-sm active:scale-95 cursor-pointer"
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-[var(--surface-3)] hover:opacity-90 text-[var(--text-1)] font-medium transition-all shadow-sm active:scale-95 cursor-pointer"
           >
-            <Edit3 className="w-3.5 h-3.5 text-indigo-400" />
+            <Edit3 className="w-3.5 h-3.5 text-[var(--text-2)]" strokeWidth={1.6} />
             <span>自定义</span>
           </button>
         </div>
       ) : (
         <div className="flex flex-col gap-2 p-1 w-72">
-          <div className="flex items-center justify-between text-[11px] text-slate-400">
-            <span>输入追问 prompt（将创建衍生子节点）:</span>
+          <div className="flex items-center justify-between text-[11px] text-[var(--text-3)]">
+            <span>输入追问命题 (派生子节点):</span>
             <button
               onClick={() => setIsCustomMode(false)}
               onMouseDown={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
               }}
-              className="text-slate-400 hover:text-slate-200"
+              className="text-[var(--text-3)] hover:text-[var(--text-1)]"
             >
-              <X className="w-3 h-3" />
+              <X className="w-3 h-3" strokeWidth={1.6} />
             </button>
           </div>
           <textarea
             value={customPrompt}
             onChange={(e) => setCustomPrompt(e.target.value)}
             rows={2}
-            className="w-full px-2.5 py-1.5 text-xs bg-slate-950 border border-slate-700 rounded-lg text-slate-100 focus:outline-none focus:border-indigo-500 leading-relaxed resize-none"
+            className="w-full px-2.5 py-1.5 text-xs bg-[var(--surface-2)] border border-[var(--line-default)] rounded-xl text-[var(--text-1)] focus:outline-none focus:border-[var(--line-strong)] leading-relaxed resize-none"
             autoFocus
             onKeyDown={(e) => {
               if (e.key === 'Enter' && !e.shiftKey) {
@@ -166,16 +165,16 @@ export const FloatingBubbleMenu: React.FC<FloatingBubbleMenuProps> = ({
             }}
           />
           <div className="flex items-center justify-between">
-            <span className="text-[10px] text-slate-500">按 Enter 发送</span>
+            <span className="text-[10px] text-[var(--text-3)] font-mono">Enter 确认</span>
             <button
               onClick={() => handleAction('custom')}
               onMouseDown={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
               }}
-              className="px-3 py-1 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg font-medium text-[11px] shadow-md transition-colors"
+              className="px-3 py-1 bg-[var(--accent-primary)] text-[var(--accent-fg)] rounded-lg font-medium text-[11px] shadow-sm transition-opacity hover:opacity-90 cursor-pointer"
             >
-              创建分支并推演
+              派生并推演
             </button>
           </div>
         </div>

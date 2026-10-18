@@ -45,29 +45,29 @@ export const DeleteNodeModal: React.FC = () => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4 animate-in fade-in select-none">
-      <div className="w-full max-w-lg rounded-2xl bg-slate-900 border border-slate-800 shadow-2xl overflow-hidden flex flex-col text-slate-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-md p-4 animate-in fade-in select-none">
+      <div className="w-full max-w-lg rounded-[16px] glass-elevated border border-[var(--line-default)] shadow-2xl overflow-hidden flex flex-col text-[var(--text-1)]">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800 bg-slate-950/70">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--line-subtle)] bg-[var(--surface-2)]/50">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-rose-500/20 border border-rose-500/30 flex items-center justify-center text-rose-400">
+            <div className="w-8 h-8 rounded-[8px] bg-rose-500/10 border border-rose-500/20 flex items-center justify-center text-rose-500">
               <Trash2 className="w-4 h-4" />
             </div>
             <div>
-              <h2 className="text-base font-bold text-slate-100 flex items-center gap-2">
+              <h2 className="text-base font-semibold text-[var(--text-1)] flex items-center gap-2">
                 <span>删除节点确认</span>
-                <span className="text-[11px] font-mono px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 border border-slate-700">
+                <span className="text-[11px] font-mono px-2 py-0.5 rounded-[4px] bg-[var(--surface-3)] text-[var(--text-2)] border border-[var(--line-subtle)]">
                   {targetNode.title || nodeToDeleteId}
                 </span>
               </h2>
-              <span className="text-[11px] text-slate-400">
+              <span className="text-[11px] text-[var(--text-3)]">
                 请确认删除策略以及下属分支的处理方式
               </span>
             </div>
           </div>
           <button
             onClick={() => setNodeToDeleteId(null)}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition-colors"
+            className="p-1.5 rounded-[8px] text-[var(--text-3)] hover:text-[var(--text-1)] hover:bg-[var(--surface-3)] transition-colors cursor-pointer"
           >
             <X className="w-4 h-4" />
           </button>
@@ -76,49 +76,49 @@ export const DeleteNodeModal: React.FC = () => {
         {/* Content Body */}
         <div className="p-6 space-y-4 text-xs">
           {/* 节点概览 */}
-          <div className="p-3 rounded-xl bg-slate-950 border border-slate-800/80 flex flex-col gap-1">
-            <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
+          <div className="p-3.5 rounded-[10px] bg-[var(--surface-2)] border border-[var(--line-subtle)] flex flex-col gap-1">
+            <span className="text-[10px] font-mono font-medium text-[var(--text-3)] uppercase tracking-wider">
               待删除目标
             </span>
-            <div className="text-slate-100 font-bold text-sm truncate">
+            <div className="text-[var(--text-1)] font-semibold text-sm truncate">
               {targetNode.title}
             </div>
-            <div className="text-[11px] text-slate-400 line-clamp-2">
+            <div className="text-[11px] text-[var(--text-3)] line-clamp-2">
               提问：{targetNode.userQuery}
             </div>
           </div>
 
           {hasChildren ? (
             <div className="space-y-2.5">
-              <div className="flex items-center justify-between text-xs text-slate-300">
-                <span className="font-semibold flex items-center gap-1.5">
-                  <GitFork className="w-3.5 h-3.5 text-indigo-400" />
+              <div className="flex items-center justify-between text-xs text-[var(--text-2)]">
+                <span className="font-medium flex items-center gap-1.5">
+                  <GitFork className="w-3.5 h-3.5 text-[var(--accent-focus)]" />
                   <span>该节点含有 {directChildren.length} 个直接子分支 (共 {allDescendants.length} 个后代节点)</span>
                 </span>
-                <span className="text-[11px] text-slate-400">请选择子节点处置方式：</span>
+                <span className="text-[11px] text-[var(--text-3)]">请选择处置方式：</span>
               </div>
 
               {/* 选项 1: 保留并自动提升父级 (推荐) */}
               <button
                 type="button"
                 onClick={() => setStrategy('reparent')}
-                className={`w-full p-3 rounded-xl border text-left flex items-start gap-3 transition-all cursor-pointer ${
+                className={`w-full p-3 rounded-[10px] border text-left flex items-start gap-3 transition-all cursor-pointer ${
                   strategy === 'reparent'
-                    ? 'bg-indigo-950/70 border-indigo-500 text-indigo-100 shadow-[0_0_12px_rgba(99,102,241,0.25)] ring-1 ring-indigo-500'
-                    : 'bg-slate-950/60 border-slate-800 text-slate-400 hover:border-slate-700'
+                    ? 'bg-[var(--surface-2)] border-[var(--accent-focus)] text-[var(--text-1)] shadow-xs'
+                    : 'bg-[var(--surface-1)] border-[var(--line-subtle)] text-[var(--text-3)] hover:border-[var(--line-strong)]'
                 }`}
               >
-                <div className={`p-2 rounded-lg shrink-0 mt-0.5 ${strategy === 'reparent' ? 'bg-indigo-600 text-white' : 'bg-slate-800 text-slate-400'}`}>
+                <div className={`p-2 rounded-[6px] shrink-0 mt-0.5 ${strategy === 'reparent' ? 'bg-[var(--accent-focus)] text-[var(--surface-1)]' : 'bg-[var(--surface-3)] text-[var(--text-3)]'}`}>
                   <Link2 className="w-4 h-4" />
                 </div>
                 <div className="flex flex-col gap-0.5">
                   <div className="flex items-center gap-1.5">
-                    <span className="font-bold text-slate-100">保留子节点，并自动向上承接 (推荐)</span>
-                    <span className="px-1.5 py-0.2 rounded text-[9px] font-mono bg-emerald-950 text-emerald-300 border border-emerald-800">
+                    <span className="font-semibold text-[var(--text-1)]">保留子节点，并自动向上承接 (推荐)</span>
+                    <span className="px-1.5 py-0.2 rounded text-[9px] font-mono bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
                       脉络不断裂
                     </span>
                   </div>
-                  <span className="text-[11px] text-slate-400 leading-relaxed">
+                  <span className="text-[11px] text-[var(--text-3)] leading-relaxed">
                     子节点将自动连接到当前节点的父节点；若无上级父节点，则平移连接至根目标。
                   </span>
                 </div>
@@ -128,18 +128,18 @@ export const DeleteNodeModal: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setStrategy('isolate')}
-                className={`w-full p-3 rounded-xl border text-left flex items-start gap-3 transition-all cursor-pointer ${
+                className={`w-full p-3 rounded-[10px] border text-left flex items-start gap-3 transition-all cursor-pointer ${
                   strategy === 'isolate'
-                    ? 'bg-indigo-950/70 border-indigo-500 text-indigo-100 shadow-[0_0_12px_rgba(99,102,241,0.25)] ring-1 ring-indigo-500'
-                    : 'bg-slate-950/60 border-slate-800 text-slate-400 hover:border-slate-700'
+                    ? 'bg-[var(--surface-2)] border-[var(--accent-focus)] text-[var(--text-1)] shadow-xs'
+                    : 'bg-[var(--surface-1)] border-[var(--line-subtle)] text-[var(--text-3)] hover:border-[var(--line-strong)]'
                 }`}
               >
-                <div className={`p-2 rounded-lg shrink-0 mt-0.5 ${strategy === 'isolate' ? 'bg-indigo-600 text-white' : 'bg-slate-800 text-slate-400'}`}>
+                <div className={`p-2 rounded-[6px] shrink-0 mt-0.5 ${strategy === 'isolate' ? 'bg-[var(--accent-focus)] text-[var(--surface-1)]' : 'bg-[var(--surface-3)] text-[var(--text-3)]'}`}>
                   <Layers className="w-4 h-4" />
                 </div>
                 <div className="flex flex-col gap-0.5">
-                  <span className="font-bold text-slate-100">仅删除当前节点，子节点保持孤立</span>
-                  <span className="text-[11px] text-slate-400 leading-relaxed">
+                  <span className="font-semibold text-[var(--text-1)]">仅删除当前节点，子节点保持孤立</span>
+                  <span className="text-[11px] text-[var(--text-3)] leading-relaxed">
                     仅移除当前节点，子节点依然停留在画布上，不建立向上链接。
                   </span>
                 </div>
@@ -149,49 +149,49 @@ export const DeleteNodeModal: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setStrategy('cascade')}
-                className={`w-full p-3 rounded-xl border text-left flex items-start gap-3 transition-all cursor-pointer ${
+                className={`w-full p-3 rounded-[10px] border text-left flex items-start gap-3 transition-all cursor-pointer ${
                   strategy === 'cascade'
-                    ? 'bg-rose-950/60 border-rose-500 text-rose-100 shadow-[0_0_12px_rgba(244,63,94,0.25)] ring-1 ring-rose-500'
-                    : 'bg-slate-950/60 border-slate-800 text-slate-400 hover:border-slate-700'
+                    ? 'bg-rose-500/10 border-rose-500 text-[var(--text-1)] shadow-xs'
+                    : 'bg-[var(--surface-1)] border-[var(--line-subtle)] text-[var(--text-3)] hover:border-[var(--line-strong)]'
                 }`}
               >
-                <div className={`p-2 rounded-lg shrink-0 mt-0.5 ${strategy === 'cascade' ? 'bg-rose-600 text-white' : 'bg-slate-800 text-slate-400'}`}>
+                <div className={`p-2 rounded-[6px] shrink-0 mt-0.5 ${strategy === 'cascade' ? 'bg-rose-600 text-white' : 'bg-[var(--surface-3)] text-[var(--text-3)]'}`}>
                   <AlertTriangle className="w-4 h-4" />
                 </div>
                 <div className="flex flex-col gap-0.5">
                   <div className="flex items-center gap-1.5">
-                    <span className="font-bold text-rose-300">级联删除整棵子树 (共 {allDescendants.length + 1} 个节点)</span>
-                    <span className="px-1.5 py-0.2 rounded text-[9px] font-mono bg-rose-950 text-rose-300 border border-rose-800">
+                    <span className="font-semibold text-rose-500">级联删除整棵子树 (共 {allDescendants.length + 1} 个节点)</span>
+                    <span className="px-1.5 py-0.2 rounded text-[9px] font-mono bg-rose-500/10 text-rose-500 border border-rose-500/20">
                       彻底清除
                     </span>
                   </div>
-                  <span className="text-[11px] text-slate-400 leading-relaxed">
+                  <span className="text-[11px] text-[var(--text-3)] leading-relaxed">
                     将连同下属所有的子分支、孙分支节点一并彻底永久删除，不可恢复。
                   </span>
                 </div>
               </button>
             </div>
           ) : (
-            <div className="text-[11px] text-slate-300 bg-slate-950 p-3 rounded-xl border border-slate-800 flex items-center gap-2">
-              <Trash2 className="w-4 h-4 text-slate-400 shrink-0" />
+            <div className="text-[11px] text-[var(--text-2)] bg-[var(--surface-2)] p-3 rounded-[10px] border border-[var(--line-subtle)] flex items-center gap-2">
+              <Trash2 className="w-4 h-4 text-[var(--text-3)] shrink-0" />
               <span>该节点无下游子分支，删除后不会影响其他节点脉络。</span>
             </div>
           )}
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-end gap-2 px-6 py-3.5 border-t border-slate-800 bg-slate-950/50">
+        <div className="flex items-center justify-end gap-2 px-6 py-3.5 border-t border-[var(--line-subtle)] bg-[var(--surface-2)]/30">
           <button
             type="button"
             onClick={() => setNodeToDeleteId(null)}
-            className="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium transition-colors"
+            className="px-4 py-2 rounded-[8px] bg-[var(--surface-2)] hover:bg-[var(--surface-3)] text-[var(--text-2)] font-medium transition-colors cursor-pointer"
           >
             取消
           </button>
           <button
             type="button"
             onClick={handleConfirm}
-            className="px-4 py-2 rounded-lg bg-rose-600 hover:bg-rose-500 text-white font-medium shadow-md transition-colors flex items-center gap-1.5"
+            className="px-4 py-2 rounded-[8px] bg-rose-600 hover:bg-rose-500 text-white font-medium shadow-xs transition-colors flex items-center gap-1.5 cursor-pointer"
           >
             <Trash2 className="w-3.5 h-3.5" />
             <span>确认删除</span>

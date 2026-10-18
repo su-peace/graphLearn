@@ -1,16 +1,34 @@
 // components/Canvas/CapsuleNode.tsx
 import React from 'react';
 import { Handle, Position, type NodeProps } from '@xyflow/react';
-import { Pin, Paperclip, CheckCircle2, AlertOctagon, HelpCircle, Trash2 } from 'lucide-react';
+import { Pin, Paperclip, Trash2 } from 'lucide-react';
 import type { CanvasNodeData, NodeCategory } from '../../types/canvas';
 import { useCanvasStore } from '../../store/canvasStore';
 
-const CATEGORY_COLORS: Record<NodeCategory, { bg: string; text: string; label: string }> = {
-  root_goal: { bg: 'bg-amber-500/20', text: 'text-amber-300 border-amber-500/40', label: '目标' },
-  core_conclusion: { bg: 'bg-blue-500/20', text: 'text-blue-300 border-blue-500/40', label: '结论' },
-  code_impl: { bg: 'bg-violet-500/20', text: 'text-violet-300 border-violet-500/40', label: '代码' },
-  concept_qa: { bg: 'bg-cyan-500/20', text: 'text-cyan-300 border-cyan-500/40', label: '概念' },
-  chitchat_debug: { bg: 'bg-zinc-500/20', text: 'text-zinc-300 border-zinc-500/40', label: '调整' },
+const CATEGORY_MAP: Record<
+  NodeCategory,
+  { stripColor: string; label: string }
+> = {
+  root_goal: {
+    stripColor: 'bg-[var(--status-pinned)]',
+    label: '核心命题',
+  },
+  core_conclusion: {
+    stripColor: 'bg-blue-600 dark:bg-blue-400',
+    label: '结论',
+  },
+  code_impl: {
+    stripColor: 'bg-indigo-600 dark:bg-indigo-400',
+    label: '实现',
+  },
+  concept_qa: {
+    stripColor: 'bg-teal-600 dark:bg-teal-400',
+    label: '辨析',
+  },
+  chitchat_debug: {
+    stripColor: 'bg-zinc-500 dark:bg-zinc-400',
+    label: '演算',
+  },
 };
 
 export const CapsuleNode: React.FC<NodeProps> = React.memo(({ id, data, selected }) => {
@@ -24,31 +42,44 @@ export const CapsuleNode: React.FC<NodeProps> = React.memo(({ id, data, selected
   const selectNode = useCanvasStore((s) => s.selectNode);
   const isRoot = useCanvasStore((s) => s.graph.rootNodeId === id);
 
-  // 状态边框规范
-  let borderStyle = 'border-slate-700 bg-slate-900/90';
-  if (nodeData.status === 'verified') {
-    borderStyle = 'border-emerald-500/80 shadow-[0_0_12px_rgba(16,185,129,0.25)] bg-slate-900/95';
-  } else if (nodeData.status === 'deprecated') {
-    borderStyle = 'border-rose-400/80 border-dashed bg-rose-950/20';
-  } else {
-    borderStyle = 'border-slate-600/70 bg-slate-900/90';
+  const categoryMeta = CATEGORY_MAP[nodeData.category] || CATEGORY_MAP.concept_qa;
+  const isDeprecated = nodeData.status === 'deprecated';
+  const isVerified = nodeData.status === 'verified';
+
+  // 精密圆角卡片边框与背景材质 (DESIGN.md §5.2)
+  let borderClass = 'border-[var(--line-default)]';
+  let bgClass = 'bg-[var(--surface-1)]/90';
+
+  if (isRoot) {
+    borderClass = 'border-[var(--status-pinned)] shadow-sm';
+  } else if (isVerified) {
+    borderClass = 'border-[var(--status-verified)] shadow-sm';
+    bgClass = 'bg-gradient-to-b from-[var(--status-verified-bg)] to-[var(--surface-1)]';
+  } else if (isDeprecated) {
+    borderClass = 'border-[var(--status-deprecated)] border-dashed';
+    bgClass = 'bg-[var(--surface-1)]/75 opacity-75';
   }
 
-  // X-Ray 预览视觉语言
+  // 选中态聚焦环
+  const selectionClass =
+    selected || isActive
+      ? 'border-[var(--text-1)] ring-3 ring-[var(--line-default)] scale-[1.01]'
+      : 'hover:border-[var(--line-strong)]';
+
+  // X-Ray 透视逻辑
   let xrayClass = '';
   if (isXrayActive) {
     if (xrayStatus === 'full') {
-      xrayClass = 'ring-2 ring-sky-400 shadow-[0_0_16px_rgba(56,189,248,0.7)] scale-[1.03] z-20';
+      xrayClass = 'border-[var(--accent-xray)] ring-2 ring-[var(--accent-xray)]/30 scale-[1.02] z-20';
     } else if (xrayStatus === 'artifact') {
-      xrayClass = 'ring-2 ring-purple-400/80 border-dashed shadow-[0_0_10px_rgba(168,85,247,0.4)] z-10';
+      xrayClass = 'border-dashed border-[var(--text-2)] z-10';
     } else if (xrayStatus === 'negative_warn') {
-      xrayClass = 'ring-2 ring-rose-500 shadow-[0_0_12px_rgba(244,63,94,0.5)] z-10';
+      xrayClass = 'border-[var(--status-deprecated)] ring-2 ring-[var(--status-deprecated)]/30 z-10';
     } else if (xrayStatus === 'dropped') {
-      xrayClass = 'opacity-25 blur-[0.2px] scale-[0.98]';
+      xrayClass = 'opacity-20 scale-[0.98] pointer-events-none';
     }
   }
 
-  const categoryMeta = CATEGORY_COLORS[nodeData.category] || CATEGORY_COLORS.concept_qa;
   const takeaway =
     nodeData.artifact?.coreTakeaway ||
     nodeData.userQuery ||
@@ -57,57 +88,76 @@ export const CapsuleNode: React.FC<NodeProps> = React.memo(({ id, data, selected
   return (
     <div
       onClick={() => selectNode(id)}
-      className={`group relative w-[240px] h-[76px] rounded-lg border p-2 transition-all duration-200 select-none cursor-pointer flex flex-col justify-between overflow-hidden backdrop-blur-md ${borderStyle} ${
-        selected || isActive ? 'ring-2 ring-indigo-500 shadow-[0_0_15px_rgba(99,102,241,0.4)]' : ''
-      } ${isTargetOfCitation ? 'citation-target-pulse ring-4 ring-sky-400' : ''} ${xrayClass}`}
+      className={`group relative ${
+        isRoot ? 'w-[260px] h-[86px]' : 'w-[240px] h-[80px]'
+      } rounded-[12px] border px-3 py-2.5 transition-all duration-200 select-none cursor-pointer flex flex-col justify-between overflow-hidden backdrop-blur-md ${borderClass} ${bgClass} ${selectionClass} ${
+        isTargetOfCitation ? 'citation-target-pulse ring-2 ring-[var(--accent-focus)]' : ''
+      } ${isStreamingHere ? 'node-streaming-breathe' : ''} ${xrayClass}`}
     >
-
-      {/* 输入 Handle (左侧，允许多父连接) */}
+      {/* 输入连接点 (Handle) */}
       <Handle
         type="target"
         position={Position.Left}
-        className="!w-2.5 !h-2.5 !bg-indigo-400 !border-2 !border-slate-900 hover:!scale-125 transition-transform"
+        className="!w-1.5 !h-1.5 hover:!w-2.5 hover:!h-2.5 !bg-[var(--line-strong)] hover:!bg-[var(--text-1)] !border-none transition-all"
       />
 
-      {/* 顶部元信息栏 */}
-      <div className="flex items-center justify-between gap-1 text-[11px] leading-none mb-1">
+      {/* 顶部信息行：类别微色条 + 标题 + 几何状态指示器 */}
+      <div className="flex items-center justify-between gap-1 leading-none mb-1">
         <div className="flex items-center gap-1.5 overflow-hidden">
-          <span
-            className={`px-1.5 py-0.5 rounded border text-[10px] font-medium shrink-0 ${categoryMeta.bg} ${categoryMeta.text}`}
-          >
+          {/* 左上角 3px x 12px 垂直圆角微色条 */}
+          <div className={`w-[3px] h-[12px] rounded-full shrink-0 ${categoryMeta.stripColor}`} />
+          <span className="text-[11px] font-medium text-[var(--text-3)] shrink-0">
             {categoryMeta.label}
           </span>
-          <span className="font-semibold text-slate-200 truncate max-w-[110px]" title={nodeData.title}>
+          <span
+            className={`text-[13px] font-semibold text-[var(--text-1)] truncate max-w-[125px] ${
+              isDeprecated ? 'line-through text-[var(--text-3)]' : ''
+            }`}
+            title={nodeData.title}
+          >
             {nodeData.title || '探索节点'}
           </span>
         </div>
 
-        <div className="flex items-center gap-1 shrink-0 text-slate-400">
+        {/* 右上角纯几何状态图标 (零 Emoji) */}
+        <div className="flex items-center gap-1 shrink-0 text-[var(--text-3)]">
           {nodeData.manualState === 'pinned' && (
-            <span title="Tier 1 强制置顶权威">
-              <Pin className="w-3 h-3 text-amber-400 fill-amber-400/40" />
+            <span title="已置顶参考">
+              <Pin className="w-3 h-3 text-[var(--status-pinned)] fill-current" strokeWidth={1.6} />
             </span>
           )}
           {nodeData.mountedChunks && nodeData.mountedChunks.length > 0 && (
             <span title={`挂载了 ${nodeData.mountedChunks.length} 个资料切片`}>
-              <Paperclip className="w-3 h-3 text-sky-400" />
+              <Paperclip className="w-3 h-3 text-[var(--text-3)]" strokeWidth={1.6} />
             </span>
           )}
-          {nodeData.status === 'verified' && (
-            <span title="已验证 (可跨分支检索)">
-              <CheckCircle2 className="w-3 h-3 text-emerald-400" />
+
+          {/* 纯几何状态标识 (DESIGN.md §5.2) */}
+          {isVerified && (
+            <span title="已验证" className="text-[var(--status-verified)]">
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                <circle cx="6" cy="6" r="5" fill="currentColor" fillOpacity="0.15" />
+                <path d="M3.5 6.2L5 7.7L8.5 4.2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
             </span>
           )}
-          {nodeData.status === 'deprecated' && (
-            <span title="已证伪 (转换为反向避坑约束)">
-              <AlertOctagon className="w-3 h-3 text-rose-400" />
+          {isDeprecated && (
+            <span title="已证伪" className="text-[var(--status-deprecated)]">
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                <circle cx="6" cy="6" r="4.5" stroke="currentColor" strokeWidth="1.4" />
+                <path d="M3 9L9 3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+              </svg>
             </span>
           )}
-          {nodeData.status === 'exploring' && (
-            <span title="探索草稿态">
-              <HelpCircle className="w-3 h-3 text-slate-400" />
+          {nodeData.status === 'exploring' && !isRoot && (
+            <span title="探索中" className="text-[var(--status-exploring)]">
+              <svg width="11" height="11" viewBox="0 0 12 12" fill="none">
+                <circle cx="6" cy="6" r="4.5" stroke="currentColor" strokeWidth="1.4" strokeDasharray="2 2" />
+              </svg>
             </span>
           )}
+
+          {/* 删除按钮 (仅 Hover 显示) */}
           {!isRoot && (
             <button
               type="button"
@@ -115,40 +165,38 @@ export const CapsuleNode: React.FC<NodeProps> = React.memo(({ id, data, selected
                 e.stopPropagation();
                 deleteNode(id);
               }}
-              className="opacity-0 group-hover:opacity-100 hover:text-rose-400 p-0.5 rounded transition-all ml-0.5 cursor-pointer text-slate-500 hover:scale-110"
+              className="opacity-0 group-hover:opacity-100 hover:text-[var(--status-deprecated)] p-0.5 rounded transition-all ml-0.5 cursor-pointer text-[var(--text-4)]"
               title="删除此节点"
             >
-              <Trash2 className="w-3 h-3" />
+              <Trash2 className="w-3 h-3" strokeWidth={1.6} />
             </button>
           )}
         </div>
       </div>
 
-
-      {/* 正文 2 行截断的 50 字核心结论 */}
+      {/* 正文：2 行截断的核心摘要 */}
       <div
-        className="text-[11px] leading-tight text-slate-300/90 line-clamp-2 overflow-hidden flex-1"
+        className="text-[11.5px] leading-[1.45] text-[var(--text-3)] line-clamp-2 overflow-hidden flex-1 font-normal"
         title={takeaway}
       >
         {isStreamingHere ? (
-          <span className="inline-flex items-center gap-1 text-sky-400 font-medium">
-            <span className="inline-block w-1.5 h-1.5 rounded-full bg-sky-400 animate-ping" />
-            正在流式生成推演...
+          <span className="inline-flex items-center gap-1 text-[var(--text-1)] font-mono text-[11px]">
+            <span>推演中</span>
+            <span className="typewriter-cursor" />
           </span>
         ) : (
           takeaway
         )}
       </div>
 
-      {/* 输出 Handle (右侧) */}
+      {/* 输出连接点 (Handle) */}
       <Handle
         type="source"
         position={Position.Right}
-        className="!w-2.5 !h-2.5 !bg-sky-400 !border-2 !border-slate-900 hover:!scale-125 transition-transform"
+        className="!w-1.5 !h-1.5 hover:!w-2.5 hover:!h-2.5 !bg-[var(--line-strong)] hover:!bg-[var(--text-1)] !border-none transition-all"
       />
     </div>
   );
 });
 
 CapsuleNode.displayName = 'CapsuleNode';
-

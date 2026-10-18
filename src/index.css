@@ -2,8 +2,126 @@
 @import "@xyflow/react/dist/style.css";
 
 :root {
-  --background: #090d16;
-  --foreground: #f1f5f9;
+  /* === Light Mode：宣纸暖白与矿物灰 === */
+  --bg-canvas: #F6F5F2;
+  --bg-dot: rgba(24, 24, 27, 0.12);
+
+  /* 光学毛玻璃表面 */
+  --glass-bg: rgba(255, 255, 255, 0.76);
+  --glass-bg-elevated: rgba(255, 255, 255, 0.90);
+  --glass-border: rgba(24, 24, 27, 0.08);
+  --glass-highlight: rgba(255, 255, 255, 0.95);
+  --glass-shadow: 0 12px 32px -8px rgba(24, 24, 27, 0.08), 0 2px 6px -1px rgba(24, 24, 27, 0.04);
+
+  /* 实心/半实心组件层级 */
+  --surface-1: #FFFFFF;
+  --surface-2: #F0EFEA;
+  --surface-3: #E6E4DD;
+
+  /* 线条与描边 */
+  --line-subtle: rgba(24, 24, 27, 0.06);
+  --line-default: rgba(24, 24, 27, 0.12);
+  --line-strong: rgba(24, 24, 27, 0.24);
+  --edge-default: #CBD5E1;
+
+  /* 文本层级 */
+  --text-1: #18181B;
+  --text-2: #3F3F46;
+  --text-3: #71717A;
+  --text-4: #A1A1AA;
+
+  /* 核心强调色（墨黑 + 陶土橙，告别 AI 蓝紫） */
+  --accent-primary: #18181B;
+  --accent-fg: #FAFAFA;
+  --accent-focus: #D97757;
+  --accent-xray: #0284C7;
+
+  /* 语义状态色（自然矿物色系） */
+  --status-verified: #15803D;
+  --status-verified-bg: rgba(21, 128, 61, 0.08);
+  --status-deprecated: #B91C1C;
+  --status-deprecated-bg: rgba(185, 28, 28, 0.06);
+  --status-exploring: #71717A;
+  --status-pinned: #B45309;
+}
+
+.dark {
+  /* === Dark Mode：曜石暗房与精密光学 === */
+  --bg-canvas: #0B0C0E;
+  --bg-dot: rgba(255, 255, 255, 0.10);
+
+  /* 光学毛玻璃表面 */
+  --glass-bg: rgba(22, 24, 29, 0.72);
+  --glass-bg-elevated: rgba(30, 33, 40, 0.86);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-highlight: rgba(255, 255, 255, 0.08);
+  --glass-shadow: 0 16px 40px -10px rgba(0, 0, 0, 0.65), 0 2px 8px -2px rgba(0, 0, 0, 0.4);
+
+  /* 实心/半实心组件层级 */
+  --surface-1: #14161A;
+  --surface-2: #1C1F26;
+  --surface-3: #262A34;
+
+  /* 线条与描边 */
+  --line-subtle: rgba(255, 255, 255, 0.05);
+  --line-default: rgba(255, 255, 255, 0.10);
+  --line-strong: rgba(255, 255, 255, 0.22);
+  --edge-default: #333842;
+
+  /* 文本层级 */
+  --text-1: #F4F4F5;
+  --text-2: #D4D4D8;
+  --text-3: #A1A1AA;
+  --text-4: #52525B;
+
+  /* 核心强调色 */
+  --accent-primary: #F4F4F5;
+  --accent-fg: #18181B;
+  --accent-focus: #E08A6B;
+  --accent-xray: #38BDF8;
+
+  /* 语义状态色 */
+  --status-verified: #22C55E;
+  --status-verified-bg: rgba(34, 197, 94, 0.12);
+  --status-deprecated: #F87171;
+  --status-deprecated-bg: rgba(248, 113, 113, 0.10);
+  --status-exploring: #A1A1AA;
+  --status-pinned: #F59E0B;
+}
+
+@theme {
+  --color-canvas: var(--bg-canvas);
+  --color-surface-1: var(--surface-1);
+  --color-surface-2: var(--surface-2);
+  --color-surface-3: var(--surface-3);
+
+  --color-text-1: var(--text-1);
+  --color-text-2: var(--text-2);
+  --color-text-3: var(--text-3);
+  --color-text-4: var(--text-4);
+
+  --color-accent-primary: var(--accent-primary);
+  --color-accent-fg: var(--accent-fg);
+  --color-accent-focus: var(--accent-focus);
+  --color-accent-xray: var(--accent-xray);
+
+  --color-status-verified: var(--status-verified);
+  --color-status-deprecated: var(--status-deprecated);
+  --color-status-exploring: var(--status-exploring);
+  --color-status-pinned: var(--status-pinned);
+
+  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "PingFang SC", "HarmonyOS Sans SC", "Microsoft YaHei", sans-serif;
+  --font-mono: "JetBrains Mono", "Fira Code", ui-monospace, monospace;
+
+  --radius-xs: 4px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 22px;
+  --radius-pill: 9999px;
+
+  --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
+  --ease-spring: cubic-bezier(0.22, 1.2, 0.36, 1);
 }
 
 * {
@@ -14,53 +132,139 @@ html, body, #root {
   margin: 0;
   padding: 0;
   width: 100vw;
-  height: 100vh;
+  height: 100dvh;
   overflow: hidden;
-  background-color: #090d16;
-  color: #f1f5f9;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  overscroll-behavior: none;
+  background-color: var(--bg-canvas);
+  color: var(--text-1);
+  font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
+  transition: background-color 250ms ease, color 250ms ease, border-color 250ms ease;
 }
 
-/* React Flow custom node and canvas theme overrides */
+/* 光学毛玻璃材质 (DESIGN.md §3.1) */
+.glass {
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow), inset 0 1px 0 0 var(--glass-highlight);
+  transition: background-color 250ms ease, border-color 250ms ease, box-shadow 250ms ease;
+}
+
+.glass-elevated {
+  background: var(--glass-bg-elevated);
+  backdrop-filter: blur(28px) saturate(180%);
+  -webkit-backdrop-filter: blur(28px) saturate(180%);
+  border: 1px solid var(--line-default);
+  box-shadow: var(--glass-shadow), inset 0 1px 0 0 var(--glass-highlight);
+  transition: background-color 250ms ease, border-color 250ms ease, box-shadow 250ms ease;
+}
+
+.glass-pill {
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow), inset 0 1px 0 0 var(--glass-highlight);
+  border-radius: var(--radius-pill);
+}
+
+/* React Flow 画布与连线 (DESIGN.md §5.3) */
 .react-flow__background {
-  background-color: #090d16;
+  background-color: var(--bg-canvas);
 }
 
 .react-flow__edge-path {
-  stroke: #334155;
-  stroke-width: 2px;
-  transition: stroke 0.3s ease, stroke-width 0.3s ease;
+  stroke: var(--edge-default);
+  stroke-width: 1.5px;
+  transition: stroke 0.25s ease, stroke-width 0.25s ease, opacity 0.25s ease;
 }
 
 .react-flow__edge.selected .react-flow__edge-path {
-  stroke: #6366f1;
-  stroke-width: 2.5px;
+  stroke: var(--text-1);
+  stroke-width: 2px;
 }
 
-/* Custom edge glows for X-Ray preview */
+/* X-Ray 光学链路动画 */
+@keyframes edgeFlow {
+  from {
+    stroke-dashoffset: 24;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
 .edge-solid-glow .react-flow__edge-path {
-  stroke: #38bdf8 !important;
-  stroke-width: 3px !important;
-  filter: drop-shadow(0 0 6px rgba(56, 189, 248, 0.8));
+  stroke: var(--accent-xray) !important;
+  stroke-width: 2px !important;
+  stroke-dasharray: 4 8;
+  animation: edgeFlow 1.2s linear infinite;
 }
 
 .edge-artifact-glow .react-flow__edge-path {
-  stroke: #a855f7 !important;
-  stroke-width: 2px !important;
-  stroke-dasharray: 5 5;
-  filter: drop-shadow(0 0 4px rgba(168, 85, 247, 0.5));
+  stroke: var(--text-2) !important;
+  stroke-width: 1.5px !important;
+  stroke-dasharray: 2 4;
 }
 
 .edge-dimmed .react-flow__edge-path {
-  stroke: #1e293b !important;
-  opacity: 0.25;
+  stroke: var(--edge-default) !important;
+  opacity: 0.18;
 }
 
-/* Custom scrollbars */
+/* 节点流式推演打字机光标与状态 */
+@keyframes typewriterCursor {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
+}
+
+.typewriter-cursor {
+  display: inline-block;
+  width: 7px;
+  height: 13px;
+  vertical-align: middle;
+  background-color: var(--text-1);
+  animation: typewriterCursor 0.9s steps(2, start) infinite;
+}
+
+@keyframes nodeBreathe {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.55;
+  }
+}
+
+.node-streaming-breathe {
+  animation: nodeBreathe 2s ease-in-out infinite;
+}
+
+/* 引用对焦呼吸波 */
+@keyframes focusRing {
+  0%, 100% {
+    box-shadow: 0 0 0 0 var(--accent-focus);
+  }
+  50% {
+    box-shadow: 0 0 0 6px transparent;
+  }
+}
+
+.citation-target-pulse {
+  animation: focusRing 1s ease-in-out 2;
+  border-color: var(--accent-focus) !important;
+}
+
+/* 极简滚动条 */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
 }
 
 ::-webkit-scrollbar-track {
@@ -68,24 +272,19 @@ html, body, #root {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(148, 163, 184, 0.2);
-  border-radius: 9999px;
+  background: var(--line-default);
+  border-radius: var(--radius-pill);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(148, 163, 184, 0.4);
+  background: var(--line-strong);
 }
 
-@keyframes pulseGlow {
-  0%, 100% {
-    box-shadow: 0 0 0 0 rgba(56, 189, 248, 0.7);
+/* 无障碍动效降级 */
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
-  50% {
-    box-shadow: 0 0 0 10px rgba(56, 189, 248, 0);
-  }
-}
-
-.citation-target-pulse {
-  animation: pulseGlow 1s ease-in-out 2;
-  border-color: #38bdf8 !important;
 }

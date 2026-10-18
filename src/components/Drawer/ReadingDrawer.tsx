@@ -12,18 +12,11 @@ import {
   HelpCircle,
   Copy,
   Check,
-  Send,
   Zap,
-  Share2,
   Trash2,
   Maximize2,
   Minimize2,
-  MessageSquare,
-  Paperclip,
-  Sliders,
-  Sparkles,
-  Bot,
-  User,
+  ArrowUp,
 } from 'lucide-react';
 import { useCanvasStore } from '../../store/canvasStore';
 import type { NodeCategory } from '../../types/canvas';
@@ -49,9 +42,9 @@ const CodeBlock: React.FC<{ language?: string; codeString: string }> = ({
   };
 
   return (
-    <div className="my-3 rounded-xl overflow-hidden border border-slate-800 bg-[#070b14] shadow-lg">
-      <div className="flex items-center justify-between px-3.5 py-1.5 bg-slate-900/90 border-b border-slate-800/80 text-[11px] font-mono text-slate-400">
-        <span className="text-sky-400 font-semibold uppercase">{language || 'code'}</span>
+    <div className="my-3 rounded-xl overflow-hidden border border-[var(--line-subtle)] bg-[var(--surface-2)] shadow-xs">
+      <div className="flex items-center justify-between px-3.5 py-1.5 bg-[var(--surface-3)] border-b border-[var(--line-subtle)] text-[11px] font-mono text-[var(--text-3)]">
+        <span className="font-semibold uppercase tracking-wider">{language || 'code'}</span>
         <button
           onClick={handleCopy}
           onMouseDown={(e) => {
@@ -59,22 +52,22 @@ const CodeBlock: React.FC<{ language?: string; codeString: string }> = ({
             e.stopPropagation();
           }}
           type="button"
-          className="flex items-center gap-1 text-slate-400 hover:text-slate-200 transition-colors cursor-pointer"
+          className="flex items-center gap-1 text-[var(--text-3)] hover:text-[var(--text-1)] transition-colors cursor-pointer"
         >
           {copied ? (
             <>
-              <Check className="w-3.5 h-3.5 text-emerald-400" />
-              <span className="text-emerald-400">已复制</span>
+              <Check className="w-3.5 h-3.5 text-[var(--status-verified)]" strokeWidth={1.6} />
+              <span className="text-[var(--status-verified)]">已复制</span>
             </>
           ) : (
             <>
-              <Copy className="w-3.5 h-3.5" />
+              <Copy className="w-3.5 h-3.5" strokeWidth={1.6} />
               <span>复制代码</span>
             </>
           )}
         </button>
       </div>
-      <pre className="p-3.5 overflow-x-auto text-[13px] leading-relaxed font-mono text-emerald-300/90 selection:bg-indigo-600 selection:text-white">
+      <pre className="p-3.5 overflow-x-auto text-[13px] leading-relaxed font-mono text-[var(--text-1)] selection:bg-[var(--accent-focus)] selection:text-white">
         <code>{codeString}</code>
       </pre>
     </div>
@@ -209,16 +202,18 @@ export const ReadingDrawer: React.FC<ReadingDrawerProps> = ({ onNavigateToNode }
   const renderFormattedMarkdown = (raw: string) => {
     if (!raw) {
       return (
-        <div className="py-12 flex flex-col items-center justify-center text-center text-slate-400 gap-3">
-          <Bot className="w-10 h-10 text-slate-600 animate-pulse" />
-          <div className="text-sm font-medium text-slate-300">暂无推演内容</div>
-          <div className="text-xs text-slate-500 max-w-sm">
+        <div className="py-16 flex flex-col items-center justify-center text-center text-[var(--text-3)] gap-3">
+          <div className="w-10 h-10 rounded-full bg-[var(--surface-2)] border border-[var(--line-default)] flex items-center justify-center text-[var(--accent-focus)]">
+            <RotateCw className="w-4 h-4" />
+          </div>
+          <div className="text-sm font-semibold text-[var(--text-1)]">暂无推演内容</div>
+          <div className="text-xs text-[var(--text-3)] max-w-sm">
             点击下方按钮即可唤醒模型进行完整认知链路推演并生成结构化知识卡。
           </div>
           <button
             onClick={() => runStreamForNode(activeNode.id)}
             disabled={isStreaming}
-            className="mt-2 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-medium text-xs flex items-center gap-2 shadow-lg shadow-indigo-600/30 transition-all cursor-pointer"
+            className="mt-2 px-4 py-2 rounded-[8px] bg-[var(--text-1)] hover:opacity-90 text-[var(--surface-1)] font-medium text-xs flex items-center gap-2 shadow-xs transition-all cursor-pointer"
           >
             <RotateCw className="w-3.5 h-3.5" />
             <span>开始深度认知推演</span>
@@ -252,7 +247,7 @@ export const ReadingDrawer: React.FC<ReadingDrawerProps> = ({ onNavigateToNode }
               if (isInline) {
                 return (
                   <code
-                    className="bg-slate-900 border border-slate-800 text-sky-300 font-mono text-[13px] px-1.5 py-0.5 rounded mx-0.5"
+                    className="bg-[var(--surface-3)] border border-[var(--line-subtle)] text-[var(--accent-focus)] font-mono text-[12.5px] px-1.5 py-0.5 rounded-[4px] mx-0.5"
                     {...props}
                   >
                     {children}
@@ -267,63 +262,63 @@ export const ReadingDrawer: React.FC<ReadingDrawerProps> = ({ onNavigateToNode }
               );
             },
             pre({ children }) {
-              return <div className="not-prose">{children}</div>;
+              return <div className="not-prose my-3">{children}</div>;
             },
             h1({ children }) {
               return (
-                <h1 className="text-lg md:text-xl font-bold text-slate-100 mt-5 mb-2.5 pb-1 border-b border-slate-800/80 flex items-center gap-2">
-                  <span className="w-1.5 h-5 rounded-full bg-indigo-500" />
+                <h1 className="text-lg md:text-xl font-semibold text-[var(--text-1)] mt-6 mb-3 pb-2 border-b border-[var(--line-subtle)] flex items-center gap-2">
+                  <span className="w-1.5 h-4 rounded-full bg-[var(--accent-focus)]" />
                   {children}
                 </h1>
               );
             },
             h2({ children }) {
               return (
-                <h2 className="text-base md:text-lg font-bold text-sky-200 mt-4 mb-2 flex items-center gap-2">
-                  <span className="w-1 h-4 rounded-full bg-sky-500" />
+                <h2 className="text-base md:text-lg font-medium text-[var(--text-1)] mt-5 mb-2 flex items-center gap-2">
+                  <span className="w-1 h-3.5 rounded-full bg-[var(--line-strong)]" />
                   {children}
                 </h2>
               );
             },
             h3({ children }) {
               return (
-                <h3 className="text-sm md:text-base font-semibold text-slate-200 mt-3 mb-1.5">
+                <h3 className="text-sm md:text-base font-medium text-[var(--text-1)] mt-4 mb-1.5">
                   {children}
                 </h3>
               );
             },
             p({ children }) {
               return (
-                <p className="my-2.5 leading-7 text-slate-200 text-sm md:text-[14.5px] tracking-wide">
+                <p className="my-2.5 leading-7 text-[var(--text-2)] text-sm md:text-[14.5px] tracking-normal">
                   {children}
                 </p>
               );
             },
             ul({ children }) {
               return (
-                <ul className="list-disc pl-5 my-2.5 space-y-1.5 text-sm md:text-[14.5px] text-slate-200 leading-7">
+                <ul className="list-disc pl-5 my-2.5 space-y-1.5 text-sm md:text-[14.5px] text-[var(--text-2)] leading-7">
                   {children}
                 </ul>
               );
             },
             ol({ children }) {
               return (
-                <ol className="list-decimal pl-5 my-2.5 space-y-1.5 text-sm md:text-[14.5px] text-slate-200 leading-7">
+                <ol className="list-decimal pl-5 my-2.5 space-y-1.5 text-sm md:text-[14.5px] text-[var(--text-2)] leading-7">
                   {children}
                 </ol>
               );
             },
             blockquote({ children }) {
               return (
-                <blockquote className="border-l-4 border-indigo-500 bg-indigo-950/20 rounded-r-xl px-4 py-2.5 my-3 text-slate-300 text-sm leading-relaxed">
+                <blockquote className="border-l-2 border-[var(--line-strong)] bg-[var(--surface-2)] rounded-r-lg px-4 py-2.5 my-3 text-[var(--text-2)] text-sm leading-relaxed italic">
                   {children}
                 </blockquote>
               );
             },
             table({ children }) {
               return (
-                <div className="overflow-x-auto my-3 border border-slate-800 rounded-xl">
-                  <table className="w-full text-xs text-left text-slate-300 divide-y divide-slate-800">
+                <div className="overflow-x-auto my-3 border border-[var(--line-default)] rounded-[8px]">
+                  <table className="w-full text-xs text-left text-[var(--text-2)] divide-y divide-[var(--line-subtle)]">
                     {children}
                   </table>
                 </div>
@@ -331,13 +326,13 @@ export const ReadingDrawer: React.FC<ReadingDrawerProps> = ({ onNavigateToNode }
             },
             th({ children }) {
               return (
-                <th className="px-3 py-2 bg-slate-900 font-semibold text-slate-200">
+                <th className="px-3 py-2 bg-[var(--surface-2)] font-semibold text-[var(--text-1)]">
                   {children}
                 </th>
               );
             },
             td({ children }) {
-              return <td className="px-3 py-2 border-t border-slate-800/50">{children}</td>;
+              return <td className="px-3 py-2 border-t border-[var(--line-subtle)] text-[var(--text-2)]">{children}</td>;
             },
           }}
         >
@@ -372,30 +367,69 @@ export const ReadingDrawer: React.FC<ReadingDrawerProps> = ({ onNavigateToNode }
 
       {/* 遮罩背景（大屏模式下可点击关闭） */}
       <div
-        className="fixed inset-0 bg-black/40 backdrop-blur-[2px] z-30 transition-opacity"
+        className="fixed inset-0 bg-black/25 backdrop-blur-[2px] z-30 transition-opacity"
         onClick={closeDrawer}
       />
 
-      {/* 现代化 AI 聊天与推演侧边栏 */}
+      {/* 现代化 AI 推演手稿与阅读抽屉 */}
       <div
-        className={`fixed top-0 right-0 h-full ${widthClasses} bg-[#0b101b] border-l border-slate-800/90 shadow-2xl z-40 flex flex-col transition-all duration-300 ease-out animate-in slide-in-from-right`}
+        className={`fixed top-0 right-0 h-full ${widthClasses} glass-elevated border-l border-[var(--line-default)] shadow-2xl z-40 flex flex-col transition-all duration-300 ease-out animate-in slide-in-from-right`}
       >
         {/* 顶部标题与工具控制条 */}
-        <div className="flex items-center justify-between px-5 py-3 border-b border-slate-800 bg-slate-900/80 backdrop-blur-md shrink-0">
+        <div className="flex items-center justify-between px-5 py-3 border-b border-[var(--line-subtle)] bg-[var(--surface-1)]/80 backdrop-blur-md shrink-0">
           <div className="flex items-center gap-2.5 overflow-hidden">
-            <span className="text-[11px] font-mono px-2 py-0.5 rounded-md bg-indigo-950/80 border border-indigo-700/60 text-indigo-300 font-semibold shrink-0">
+            <span className="text-[11px] font-mono px-2 py-0.5 rounded-[6px] bg-[var(--surface-3)] border border-[var(--line-subtle)] text-[var(--text-3)] font-medium shrink-0">
               {activeNode.id}
             </span>
             <input
               type="text"
               value={activeNode.title}
               onChange={(e) => updateNodeData(activeNode.id, { title: e.target.value })}
-              className="text-sm font-bold text-slate-100 bg-transparent hover:bg-slate-800/60 focus:bg-slate-800 px-2 py-1 rounded-lg border border-transparent focus:border-slate-700 outline-none truncate max-w-[280px]"
+              className="text-sm font-semibold text-[var(--text-1)] bg-transparent hover:bg-[var(--surface-2)] focus:bg-[var(--surface-2)] px-2 py-1 rounded-[8px] border border-transparent focus:border-[var(--line-strong)] outline-none truncate max-w-[200px] sm:max-w-[260px] transition-colors"
               title="点击可直接编辑节点标题"
             />
           </div>
 
-          <div className="flex items-center gap-1.5 text-slate-400 shrink-0">
+          <div className="flex items-center gap-2 text-[var(--text-3)] shrink-0">
+            {/* 3-State Segmented Control (DESIGN.md §5.4) */}
+            <div className="flex items-center rounded-[8px] p-0.5 bg-[var(--surface-2)] border border-[var(--line-subtle)] text-[11px]">
+              <button
+                onClick={() => setNodeStatus(activeNode.id, 'exploring')}
+                className={`px-2 py-0.5 rounded-[6px] text-[11px] font-medium transition-all cursor-pointer ${
+                  activeNode.status === 'exploring'
+                    ? 'bg-[var(--surface-1)] text-[var(--text-1)] shadow-xs'
+                    : 'text-[var(--text-3)] hover:text-[var(--text-1)]'
+                }`}
+                title="标记为探索状态"
+              >
+                探索
+              </button>
+              <button
+                onClick={() => setNodeStatus(activeNode.id, 'verified')}
+                className={`px-2 py-0.5 rounded-[6px] text-[11px] font-medium transition-all cursor-pointer ${
+                  activeNode.status === 'verified'
+                    ? 'bg-[var(--accent-verified-bg)] text-[var(--accent-verified)] border border-[var(--accent-verified-border)] shadow-xs'
+                    : 'text-[var(--text-3)] hover:text-[var(--text-1)]'
+                }`}
+                title="标记为已验证 (可被跨分支检索)"
+              >
+                已验证
+              </button>
+              <button
+                onClick={() => setNodeStatus(activeNode.id, 'deprecated')}
+                className={`px-2 py-0.5 rounded-[6px] text-[11px] font-medium transition-all cursor-pointer ${
+                  activeNode.status === 'deprecated'
+                    ? 'bg-[var(--accent-deprecated-bg)] text-[var(--accent-deprecated)] border border-[var(--accent-deprecated-border)] shadow-xs'
+                    : 'text-[var(--text-3)] hover:text-[var(--text-1)]'
+                }`}
+                title="标记为已证伪 (转化为反向避坑约束)"
+              >
+                已证伪
+              </button>
+            </div>
+
+            <div className="w-px h-4 bg-[var(--line-subtle)] mx-0.5" />
+
             {/* 宽度缩放切换 */}
             <button
               onClick={() => {
@@ -403,13 +437,13 @@ export const ReadingDrawer: React.FC<ReadingDrawerProps> = ({ onNavigateToNode }
                 else if (widthMode === 'wide') setWidthMode('ultra');
                 else setWidthMode('standard');
               }}
-              className="p-1.5 rounded-lg hover:bg-slate-800 hover:text-slate-200 transition-colors"
+              className="p-1.5 rounded-[8px] hover:bg-[var(--surface-2)] hover:text-[var(--text-1)] transition-colors cursor-pointer"
               title={`切换宽度 (当前: ${
                 widthMode === 'ultra' ? '超宽' : widthMode === 'wide' ? '宽屏' : '标准'
               })`}
             >
               {widthMode === 'ultra' ? (
-                <Minimize2 className="w-4 h-4 text-sky-400" />
+                <Minimize2 className="w-4 h-4 text-[var(--accent-focus)]" />
               ) : (
                 <Maximize2 className="w-4 h-4" />
               )}
@@ -418,11 +452,11 @@ export const ReadingDrawer: React.FC<ReadingDrawerProps> = ({ onNavigateToNode }
             {/* 复制全文 */}
             <button
               onClick={handleCopyFull}
-              className="p-1.5 rounded-lg hover:bg-slate-800 hover:text-slate-200 transition-colors"
-              title="复制 AI 回答全文"
+              className="p-1.5 rounded-[8px] hover:bg-[var(--surface-2)] hover:text-[var(--text-1)] transition-colors cursor-pointer"
+              title="复制回答全文"
             >
               {copiedAll ? (
-                <Check className="w-4 h-4 text-emerald-400" />
+                <Check className="w-4 h-4 text-emerald-500" />
               ) : (
                 <Copy className="w-4 h-4" />
               )}
@@ -432,16 +466,16 @@ export const ReadingDrawer: React.FC<ReadingDrawerProps> = ({ onNavigateToNode }
             <button
               onClick={() => runStreamForNode(activeNode.id)}
               disabled={isStreaming}
-              className="p-1.5 rounded-lg hover:bg-slate-800 hover:text-sky-400 transition-colors disabled:opacity-50"
+              className="p-1.5 rounded-[8px] hover:bg-[var(--surface-2)] hover:text-[var(--accent-focus)] transition-colors disabled:opacity-50 cursor-pointer"
               title="重新向 AI 模型请求推演"
             >
-              <RotateCw className={`w-4 h-4 ${isStreamingThis ? 'animate-spin text-sky-400' : ''}`} />
+              <RotateCw className={`w-4 h-4 ${isStreamingThis ? 'animate-spin text-[var(--accent-focus)]' : ''}`} />
             </button>
 
             {/* 删除节点按钮 */}
             <button
               onClick={() => setNodeToDeleteId(activeNode.id)}
-              className="p-1.5 rounded-lg hover:bg-rose-950/60 hover:text-rose-400 text-slate-400 transition-colors"
+              className="p-1.5 rounded-[8px] hover:bg-rose-500/10 hover:text-rose-500 text-[var(--text-3)] transition-colors cursor-pointer"
               title="删除此节点 (支持保留或清理子分支)"
             >
               <Trash2 className="w-4 h-4" />
@@ -450,7 +484,7 @@ export const ReadingDrawer: React.FC<ReadingDrawerProps> = ({ onNavigateToNode }
             {/* 关闭侧边栏 */}
             <button
               onClick={closeDrawer}
-              className="p-1.5 rounded-lg hover:bg-slate-800 hover:text-slate-200 transition-colors ml-1"
+              className="p-1.5 rounded-[8px] hover:bg-[var(--surface-2)] hover:text-[var(--text-1)] transition-colors ml-1 cursor-pointer"
               title="关闭侧边栏 (Esc)"
             >
               <X className="w-4 h-4" />
@@ -458,62 +492,58 @@ export const ReadingDrawer: React.FC<ReadingDrawerProps> = ({ onNavigateToNode }
           </div>
         </div>
 
-        {/* 导航 Tab 栏：将核心推演对话置于主视区，知识卡与资料切片独立分流 */}
-        <div className="flex items-center justify-between px-5 bg-slate-900/50 border-b border-slate-800/80 text-xs shrink-0">
-          <div className="flex items-center gap-1 py-1.5">
+        {/* 导航 Tab 栏 (出版物级下划线 Tabs) */}
+        <div className="flex items-center justify-between px-5 bg-[var(--surface-1)]/50 border-b border-[var(--line-subtle)] text-xs shrink-0">
+          <div className="flex items-center gap-4">
             <button
               onClick={() => setActiveTab('chat')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium transition-all cursor-pointer ${
+              className={`py-2.5 border-b-2 font-medium transition-all cursor-pointer ${
                 activeTab === 'chat'
-                  ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+                  ? 'border-[var(--accent-focus)] text-[var(--text-1)] font-semibold'
+                  : 'border-transparent text-[var(--text-3)] hover:text-[var(--text-1)]'
               }`}
             >
-              <MessageSquare className="w-3.5 h-3.5" />
-              <span>💬 推演对话</span>
+              推演手稿
             </button>
 
             <button
               onClick={() => setActiveTab('artifact')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium transition-all cursor-pointer ${
+              className={`py-2.5 border-b-2 font-medium transition-all cursor-pointer flex items-center gap-1.5 ${
                 activeTab === 'artifact'
-                  ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+                  ? 'border-[var(--accent-focus)] text-[var(--text-1)] font-semibold'
+                  : 'border-transparent text-[var(--text-3)] hover:text-[var(--text-1)]'
               }`}
             >
-              <Zap className="w-3.5 h-3.5 text-amber-400" />
-              <span>结构化知识卡</span>
+              <span>核心结论</span>
               {activeNode.artifact && (
-                <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+                <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent-focus)]" />
               )}
             </button>
 
             <button
               onClick={() => setActiveTab('docs')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium transition-all cursor-pointer ${
+              className={`py-2.5 border-b-2 font-medium transition-all cursor-pointer ${
                 activeTab === 'docs'
-                  ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+                  ? 'border-[var(--accent-focus)] text-[var(--text-1)] font-semibold'
+                  : 'border-transparent text-[var(--text-3)] hover:text-[var(--text-1)]'
               }`}
             >
-              <Paperclip className="w-3.5 h-3.5 text-sky-400" />
-              <span>参考切片 ({activeNode.mountedChunks?.length || 0})</span>
+              参考切片 ({activeNode.mountedChunks?.length || 0})
             </button>
 
             <button
               onClick={() => setActiveTab('meta')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium transition-all cursor-pointer ${
+              className={`py-2.5 border-b-2 font-medium transition-all cursor-pointer ${
                 activeTab === 'meta'
-                  ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+                  ? 'border-[var(--accent-focus)] text-[var(--text-1)] font-semibold'
+                  : 'border-transparent text-[var(--text-3)] hover:text-[var(--text-1)]'
               }`}
             >
-              <Sliders className="w-3.5 h-3.5 text-emerald-400" />
-              <span>认知状态</span>
+              认知状态
             </button>
           </div>
 
-          <div className="text-[11px] text-slate-500 font-mono hidden sm:block">
+          <div className="text-[11px] text-[var(--text-3)] font-mono hidden sm:block">
             Token 估算: ~{activeNode.fullTokens || 0}
           </div>
         </div>
@@ -521,113 +551,99 @@ export const ReadingDrawer: React.FC<ReadingDrawerProps> = ({ onNavigateToNode }
         {/* 主视区内容切换 */}
         <div
           ref={contentRef}
-          className="flex-1 overflow-y-auto px-6 py-5 space-y-6 select-text cursor-text selection:bg-indigo-600/40 selection:text-indigo-100"
+          className="flex-1 overflow-y-auto px-6 py-5 space-y-6 select-text cursor-text selection:bg-[var(--accent-focus)]/25"
         >
-          {/* TAB 1: 核心推演对话 (Chat View) */}
+          {/* TAB 1: 核心推演手稿 (Publication Manuscript View) */}
           {activeTab === 'chat' && (
             <div className="space-y-6 max-w-4xl mx-auto">
-              {/* 用户提问气泡 */}
-              <div className="flex items-start gap-3 justify-end select-text">
-                <div className="max-w-[85%] rounded-2xl rounded-tr-sm bg-gradient-to-br from-indigo-600/90 to-indigo-800/90 text-white p-4 shadow-xl border border-indigo-500/40">
-                  <div className="flex items-center justify-between gap-3 text-[11px] text-indigo-200 mb-1.5 pb-1 border-b border-indigo-400/20">
-                    <span className="font-semibold flex items-center gap-1">
-                      <User className="w-3 h-3" />
-                      <span>我的提问</span>
-                    </span>
-                    <span className="font-mono text-[10px] text-indigo-300">
-                      ID: {activeNode.id}
-                    </span>
-                  </div>
-                  <div className="text-sm md:text-[15px] font-medium leading-relaxed whitespace-pre-wrap select-text">
-                    {activeNode.userQuery}
-                  </div>
+              {/* 章节导语 (Proposition Header，DESIGN.md §4.2 抛弃聊天气泡) */}
+              <div className="pt-2 pb-5 border-b border-[var(--line-subtle)]">
+                <div className="text-[11px] font-mono tracking-wider text-[var(--text-3)] mb-2 uppercase flex items-center justify-between">
+                  <span>PROPOSITION // {activeNode.id}</span>
+                  <span className="text-[10px] text-[var(--text-3)] font-mono">
+                    STATUS: {activeNode.status.toUpperCase()}
+                  </span>
                 </div>
-                <div className="w-8 h-8 rounded-full bg-indigo-500/20 border border-indigo-500/40 flex items-center justify-center text-indigo-300 shrink-0 mt-0.5">
-                  <User className="w-4 h-4" />
+                <div className="pl-3.5 border-l-2 border-[var(--accent-focus)] text-[16px] font-medium text-[var(--text-1)] leading-relaxed select-text">
+                  {activeNode.userQuery}
                 </div>
               </div>
 
-              {/* 知识卡就绪小条（引导点击切换） */}
+              {/* 核心结论速览卡（引导点击切换） */}
               {activeNode.artifact && (
                 <div
                   onClick={() => setActiveTab('artifact')}
-                  className="p-2.5 rounded-xl bg-amber-950/20 border border-amber-500/30 flex items-center justify-between text-xs text-amber-200 cursor-pointer hover:bg-amber-950/40 transition-colors"
+                  className="p-3 rounded-[10px] bg-[var(--surface-2)] border border-[var(--line-default)] flex items-center justify-between text-xs text-[var(--text-2)] cursor-pointer hover:border-[var(--line-strong)] transition-colors"
                 >
-                  <div className="flex items-center gap-2">
-                    <Zap className="w-4 h-4 text-amber-400 shrink-0" />
-                    <span className="font-semibold">核心结论:</span>
-                    <span className="truncate max-w-[420px] text-amber-100/90">
+                  <div className="flex items-center gap-2 overflow-hidden mr-2">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent-focus)] shrink-0" />
+                    <span className="font-semibold text-[var(--text-1)] shrink-0">核心结论:</span>
+                    <span className="truncate text-[var(--text-2)]">
                       {activeNode.artifact.coreTakeaway}
                     </span>
                   </div>
-                  <span className="text-[11px] text-amber-400 underline shrink-0">
+                  <span className="text-[11px] font-medium text-[var(--accent-focus)] shrink-0">
                     查看无损知识卡 →
                   </span>
                 </div>
               )}
 
-              {/* AI 回答气泡（主体：宽敞、高对比度、呼吸感极佳的排版） */}
-              <div className="flex items-start gap-3 select-text">
-                <div className="w-8 h-8 rounded-full bg-sky-500/20 border border-sky-500/40 flex items-center justify-center text-sky-300 shrink-0 mt-0.5">
-                  <Bot className="w-4 h-4" />
-                </div>
-                <div className="flex-1 rounded-2xl rounded-tl-sm bg-slate-900/70 border border-slate-800/90 p-5 md:p-6 shadow-2xl relative">
-                  {/* AI 回答顶部信息栏 */}
-                  <div className="flex items-center justify-between pb-3 mb-4 border-b border-slate-800 text-xs">
-                    <div className="flex items-center gap-2">
-                      <span className="font-bold text-sky-400 flex items-center gap-1.5">
-                        <Sparkles className="w-3.5 h-3.5" />
-                        <span>AI 深度推演解答</span>
-                      </span>
-                      {isStreamingThis && (
-                        <span className="px-2 py-0.5 rounded-full text-[10px] bg-sky-950 border border-sky-500/50 text-sky-300 animate-pulse">
-                          正在流式生成中...
-                        </span>
-                      )}
-                    </div>
-                    <div className="text-[11px] text-slate-400 flex items-center gap-1 bg-slate-800/50 px-2.5 py-1 rounded-full border border-slate-700/50">
-                      <span>💡 提示：划选任意词句可触发</span>
-                      <span className="text-emerald-400 font-semibold">划词即分支</span>
-                    </div>
-                  </div>
-
-                  {/* 详细 Markdown 内容 */}
-                  <div className="prose prose-invert max-w-none">
-                    {renderFormattedMarkdown(deferredContent)}
+              {/* AI 解答区（数字出版物/学术推演排版） */}
+              <div className="space-y-4">
+                {/* 顶栏推演元信息 */}
+                <div className="flex items-center justify-between pb-2 border-b border-[var(--line-subtle)] text-xs">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[11px] font-mono tracking-wider text-[var(--text-3)] uppercase">
+                      DERIVATION // AI MANUSCRIPT
+                    </span>
                     {isStreamingThis && (
-                      <span className="inline-block w-2 h-4 ml-1 bg-sky-400 animate-pulse align-middle" />
+                      <span className="px-2 py-0.5 rounded-full text-[10px] bg-[var(--surface-3)] text-[var(--accent-focus)] animate-pulse">
+                        正在流式推演...
+                      </span>
                     )}
                   </div>
+                  <div className="text-[11px] text-[var(--text-3)] flex items-center gap-1.5">
+                    <span>划选任意词句触发</span>
+                    <span className="text-[var(--accent-focus)] font-medium">划词即分支</span>
+                  </div>
+                </div>
 
-                  {/* 回答尾部快捷追问行动按钮 */}
-                  <div className="mt-6 pt-4 border-t border-slate-800/70 flex flex-wrap items-center justify-between gap-2 text-xs">
-                    <span className="text-slate-400 text-[11px]">快速沿此节点派生新探索：</span>
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => {
-                          setFollowupQuery(`针对「${activeNode.title}」的实现边界与极端异常场景深入分析`);
-                        }}
-                        className="px-2.5 py-1 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 text-[11px] transition-colors"
-                      >
-                        ⚡ 异常边界
-                      </button>
-                      <button
-                        onClick={() => {
-                          setFollowupQuery(`请给出「${activeNode.title}」的最小可运行复现代码演示`);
-                        }}
-                        className="px-2.5 py-1 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 text-[11px] transition-colors"
-                      >
-                        💻 代码复现
-                      </button>
-                      <button
-                        onClick={() => {
-                          setFollowupQuery(`对比分析「${activeNode.title}」与其他替代技术方案的优缺点`);
-                        }}
-                        className="px-2.5 py-1 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 text-[11px] transition-colors"
-                      >
-                        ⚖️ 方案权衡
-                      </button>
-                    </div>
+                {/* 详细 Markdown 内容 */}
+                <div className="text-[var(--text-2)]">
+                  {renderFormattedMarkdown(deferredContent)}
+                  {isStreamingThis && (
+                    <span className="typewriter-cursor" />
+                  )}
+                </div>
+
+                {/* 回答尾部快捷追问行动按钮 */}
+                <div className="mt-8 pt-4 border-t border-[var(--line-subtle)] flex flex-wrap items-center justify-between gap-2 text-xs">
+                  <span className="text-[var(--text-3)] text-[11px]">沿此节点派生新探索：</span>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => {
+                        setFollowupQuery(`针对「${activeNode.title}」的实现边界与极端异常场景深入分析`);
+                      }}
+                      className="px-2.5 py-1 rounded-[6px] bg-[var(--surface-2)] hover:bg-[var(--surface-3)] text-[var(--text-2)] hover:text-[var(--text-1)] border border-[var(--line-subtle)] text-[11px] transition-colors cursor-pointer"
+                    >
+                      异常边界
+                    </button>
+                    <button
+                      onClick={() => {
+                        setFollowupQuery(`请给出「${activeNode.title}」的最小可运行复现代码演示`);
+                      }}
+                      className="px-2.5 py-1 rounded-[6px] bg-[var(--surface-2)] hover:bg-[var(--surface-3)] text-[var(--text-2)] hover:text-[var(--text-1)] border border-[var(--line-subtle)] text-[11px] transition-colors cursor-pointer"
+                    >
+                      代码复现
+                    </button>
+                    <button
+                      onClick={() => {
+                        setFollowupQuery(`对比分析「${activeNode.title}」与其他替代技术方案的优缺点`);
+                      }}
+                      className="px-2.5 py-1 rounded-[6px] bg-[var(--surface-2)] hover:bg-[var(--surface-3)] text-[var(--text-2)] hover:text-[var(--text-1)] border border-[var(--line-subtle)] text-[11px] transition-colors cursor-pointer"
+                    >
+                      方案权衡
+                    </button>
                   </div>
                 </div>
               </div>
@@ -637,13 +653,13 @@ export const ReadingDrawer: React.FC<ReadingDrawerProps> = ({ onNavigateToNode }
           {/* TAB 2: 结构化无损知识卡 (KnowledgeArtifact) */}
           {activeTab === 'artifact' && (
             <div className="space-y-4 max-w-3xl mx-auto">
-              <div className="p-4 rounded-2xl bg-indigo-950/20 border border-indigo-800/50 flex flex-col gap-3">
-                <div className="flex items-center justify-between text-xs pb-2 border-b border-indigo-900/40">
-                  <span className="font-bold text-indigo-300 flex items-center gap-2 text-sm">
-                    <Zap className="w-4 h-4 text-amber-400" />
+              <div className="p-5 rounded-[12px] bg-[var(--surface-2)] border border-[var(--line-default)] flex flex-col gap-4">
+                <div className="flex items-center justify-between text-xs pb-3 border-b border-[var(--line-subtle)]">
+                  <span className="font-semibold text-[var(--text-1)] flex items-center gap-2 text-sm">
+                    <Zap className="w-4 h-4 text-[var(--accent-focus)]" />
                     结构化无损知识卡 (Tier 2 语义骨架)
                   </span>
-                  <span className="text-[11px] text-slate-400 bg-indigo-950 px-2 py-0.5 rounded border border-indigo-800">
+                  <span className="text-[11px] font-mono text-[var(--text-3)] bg-[var(--surface-1)] px-2 py-0.5 rounded-[4px] border border-[var(--line-subtle)]">
                     降级保留率 90%+ | ~{activeNode.artifactTokens || 20} Tokens
                   </span>
                 </div>
@@ -651,27 +667,27 @@ export const ReadingDrawer: React.FC<ReadingDrawerProps> = ({ onNavigateToNode }
                 {activeNode.artifact ? (
                   <div className="space-y-4 text-xs">
                     <div>
-                      <div className="text-[11px] font-semibold text-indigo-300 uppercase tracking-wider mb-1">
+                      <div className="text-[11px] font-semibold text-[var(--text-3)] uppercase tracking-wider mb-1.5 font-mono">
                         核心认知结论 (Core Takeaway)
                       </div>
-                      <div className="text-sm text-slate-100 font-medium leading-relaxed bg-slate-900/80 p-3.5 rounded-xl border border-slate-800">
-                        🎯 {activeNode.artifact.coreTakeaway}
+                      <div className="text-sm text-[var(--text-1)] font-medium leading-relaxed bg-[var(--surface-1)] p-3.5 rounded-[8px] border border-[var(--line-subtle)]">
+                        {activeNode.artifact.coreTakeaway}
                       </div>
                     </div>
 
                     {activeNode.artifact.hardInvariants &&
                       activeNode.artifact.hardInvariants.length > 0 && (
                         <div>
-                          <div className="text-[11px] font-semibold text-indigo-300 uppercase tracking-wider mb-1.5">
+                          <div className="text-[11px] font-semibold text-[var(--text-3)] uppercase tracking-wider mb-1.5 font-mono">
                             必须遵守的硬性约束 (Hard Invariants)
                           </div>
                           <div className="space-y-1.5">
                             {activeNode.artifact.hardInvariants.map((inv, idx) => (
                               <div
                                 key={idx}
-                                className="px-3 py-2 rounded-lg bg-indigo-950/50 border border-indigo-700/60 text-indigo-200 font-mono flex items-center gap-2 text-xs"
+                                className="px-3 py-2 rounded-[8px] bg-[var(--surface-1)] border border-[var(--line-subtle)] text-[var(--text-2)] font-mono flex items-center gap-2 text-xs"
                               >
-                                <span>🔒</span>
+                                <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent-focus)] shrink-0" />
                                 <span>{inv}</span>
                               </div>
                             ))}
@@ -682,10 +698,10 @@ export const ReadingDrawer: React.FC<ReadingDrawerProps> = ({ onNavigateToNode }
                     {activeNode.artifact.codeSignatures &&
                       activeNode.artifact.codeSignatures.length > 0 && (
                         <div>
-                          <div className="text-[11px] font-semibold text-indigo-300 uppercase tracking-wider mb-1.5">
+                          <div className="text-[11px] font-semibold text-[var(--text-3)] uppercase tracking-wider mb-1.5 font-mono">
                             精准代码签名 (Code Signatures)
                           </div>
-                          <div className="p-3 rounded-xl bg-[#070b14] border border-slate-800 text-[12px] font-mono text-emerald-400 space-y-1 overflow-x-auto">
+                          <div className="p-3 rounded-[8px] bg-[var(--surface-3)] border border-[var(--line-default)] text-[12px] font-mono text-[var(--text-1)] space-y-1 overflow-x-auto">
                             {activeNode.artifact.codeSignatures.map((sig, idx) => (
                               <div key={idx} className="whitespace-pre">
                                 {sig}
@@ -696,8 +712,8 @@ export const ReadingDrawer: React.FC<ReadingDrawerProps> = ({ onNavigateToNode }
                       )}
                   </div>
                 ) : (
-                  <div className="text-center py-8 text-slate-400 text-xs">
-                    暂未生成知识卡，请在对话标签中重新推演。
+                  <div className="text-center py-8 text-[var(--text-3)] text-xs">
+                    暂未生成知识卡，请在手稿标签中重新推演。
                   </div>
                 )}
               </div>
@@ -720,55 +736,55 @@ export const ReadingDrawer: React.FC<ReadingDrawerProps> = ({ onNavigateToNode }
           {activeTab === 'meta' && (
             <div className="space-y-5 max-w-3xl mx-auto text-xs">
               {/* 认识论状态机 */}
-              <div className="p-4 rounded-2xl bg-slate-900/60 border border-slate-800 space-y-3">
-                <span className="font-semibold text-slate-200 text-sm block">
+              <div className="p-4 rounded-[12px] bg-[var(--surface-2)] border border-[var(--line-default)] space-y-3">
+                <span className="font-semibold text-[var(--text-1)] text-sm block">
                   认识论状态门控 (Epistemic Status)
                 </span>
                 <div className="grid grid-cols-3 gap-2">
                   <button
                     onClick={() => setNodeStatus(activeNode.id, 'exploring')}
-                    className={`p-3 rounded-xl flex flex-col items-center gap-2 border transition-all ${
+                    className={`p-3 rounded-[8px] flex flex-col items-center gap-2 border transition-all cursor-pointer ${
                       activeNode.status === 'exploring'
-                        ? 'bg-slate-800 border-indigo-500 text-slate-100 shadow-md ring-1 ring-indigo-500'
-                        : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-slate-200'
+                        ? 'bg-[var(--surface-1)] border-[var(--line-strong)] text-[var(--text-1)] shadow-xs'
+                        : 'bg-[var(--surface-3)] border-[var(--line-subtle)] text-[var(--text-3)] hover:text-[var(--text-1)]'
                     }`}
                   >
-                    <HelpCircle className="w-5 h-5 text-amber-400" />
+                    <HelpCircle className="w-5 h-5 text-[var(--accent-focus)]" />
                     <span className="font-semibold">探索中 (Exploring)</span>
-                    <span className="text-[10px] text-slate-500 text-center">正在验证与演化</span>
+                    <span className="text-[10px] text-[var(--text-3)] text-center">正在验证与演化</span>
                   </button>
 
                   <button
                     onClick={() => setNodeStatus(activeNode.id, 'verified')}
-                    className={`p-3 rounded-xl flex flex-col items-center gap-2 border transition-all ${
+                    className={`p-3 rounded-[8px] flex flex-col items-center gap-2 border transition-all cursor-pointer ${
                       activeNode.status === 'verified'
-                        ? 'bg-emerald-950/80 border-emerald-500 text-emerald-200 shadow-md ring-1 ring-emerald-500'
-                        : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-emerald-400'
+                        ? 'bg-[var(--accent-verified-bg)] border-[var(--accent-verified-border)] text-[var(--accent-verified)] shadow-xs'
+                        : 'bg-[var(--surface-3)] border-[var(--line-subtle)] text-[var(--text-3)] hover:text-emerald-500'
                     }`}
                   >
-                    <CheckCircle2 className="w-5 h-5 text-emerald-400" />
+                    <CheckCircle2 className="w-5 h-5 text-[var(--accent-verified)]" />
                     <span className="font-semibold">已验证 (Verified)</span>
-                    <span className="text-[10px] text-slate-500 text-center">可作为基石信任</span>
+                    <span className="text-[10px] text-[var(--text-3)] text-center">可作为基石信任</span>
                   </button>
 
                   <button
                     onClick={() => setNodeStatus(activeNode.id, 'deprecated')}
-                    className={`p-3 rounded-xl flex flex-col items-center gap-2 border transition-all ${
+                    className={`p-3 rounded-[8px] flex flex-col items-center gap-2 border transition-all cursor-pointer ${
                       activeNode.status === 'deprecated'
-                        ? 'bg-rose-950/80 border-rose-500 text-rose-200 shadow-md ring-1 ring-rose-500'
-                        : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-rose-400'
+                        ? 'bg-[var(--accent-deprecated-bg)] border-[var(--accent-deprecated-border)] text-[var(--accent-deprecated)] shadow-xs'
+                        : 'bg-[var(--surface-3)] border-[var(--line-subtle)] text-[var(--text-3)] hover:text-rose-500'
                     }`}
                   >
-                    <AlertOctagon className="w-5 h-5 text-rose-400" />
+                    <AlertOctagon className="w-5 h-5 text-[var(--accent-deprecated)]" />
                     <span className="font-semibold">已证伪 (Deprecated)</span>
-                    <span className="text-[10px] text-slate-500 text-center">已被推翻或废弃</span>
+                    <span className="text-[10px] text-[var(--text-3)] text-center">已被推翻或废弃</span>
                   </button>
                 </div>
               </div>
 
               {/* 置顶与忽略控制 */}
-              <div className="p-4 rounded-2xl bg-slate-900/60 border border-slate-800 space-y-3">
-                <span className="font-semibold text-slate-200 text-sm block">
+              <div className="p-4 rounded-[12px] bg-[var(--surface-2)] border border-[var(--line-default)] space-y-3">
+                <span className="font-semibold text-[var(--text-1)] text-sm block">
                   上下文编译策略 (Tier 1 Pin / Ignore)
                 </span>
                 <div className="flex items-center gap-3">
@@ -779,10 +795,10 @@ export const ReadingDrawer: React.FC<ReadingDrawerProps> = ({ onNavigateToNode }
                         activeNode.manualState === 'pinned' ? 'auto' : 'pinned'
                       )
                     }
-                    className={`flex-1 p-3 rounded-xl border flex items-center justify-center gap-2 transition-all ${
+                    className={`flex-1 p-3 rounded-[8px] border flex items-center justify-center gap-2 transition-all cursor-pointer ${
                       activeNode.manualState === 'pinned'
-                        ? 'bg-amber-950/80 border-amber-500 text-amber-200 font-semibold'
-                        : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-amber-300'
+                        ? 'bg-[var(--surface-1)] border-[var(--line-strong)] text-[var(--accent-focus)] font-semibold shadow-xs'
+                        : 'bg-[var(--surface-3)] border-[var(--line-subtle)] text-[var(--text-3)] hover:text-[var(--text-1)]'
                     }`}
                   >
                     <Pin className="w-4 h-4" />
@@ -796,10 +812,10 @@ export const ReadingDrawer: React.FC<ReadingDrawerProps> = ({ onNavigateToNode }
                         activeNode.manualState === 'ignored' ? 'auto' : 'ignored'
                       )
                     }
-                    className={`flex-1 p-3 rounded-xl border flex items-center justify-center gap-2 transition-all ${
+                    className={`flex-1 p-3 rounded-[8px] border flex items-center justify-center gap-2 transition-all cursor-pointer ${
                       activeNode.manualState === 'ignored'
-                        ? 'bg-zinc-800 border-zinc-600 text-zinc-200 font-semibold'
-                        : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-zinc-200'
+                        ? 'bg-[var(--surface-1)] border-[var(--line-strong)] text-[var(--text-1)] font-semibold shadow-xs'
+                        : 'bg-[var(--surface-3)] border-[var(--line-subtle)] text-[var(--text-3)] hover:text-[var(--text-1)]'
                     }`}
                   >
                     <EyeOff className="w-4 h-4" />
@@ -809,8 +825,8 @@ export const ReadingDrawer: React.FC<ReadingDrawerProps> = ({ onNavigateToNode }
               </div>
 
               {/* 类别标签 */}
-              <div className="p-4 rounded-2xl bg-slate-900/60 border border-slate-800 space-y-3">
-                <span className="font-semibold text-slate-200 text-sm block">节点分类 (Category)</span>
+              <div className="p-4 rounded-[12px] bg-[var(--surface-2)] border border-[var(--line-default)] space-y-3">
+                <span className="font-semibold text-[var(--text-1)] text-sm block">节点分类 (Category)</span>
                 <div className="flex flex-wrap gap-2">
                   {(
                     [
@@ -824,10 +840,10 @@ export const ReadingDrawer: React.FC<ReadingDrawerProps> = ({ onNavigateToNode }
                     <button
                       key={cat}
                       onClick={() => setNodeCategory(activeNode.id, cat)}
-                      className={`px-3 py-1.5 rounded-lg border text-xs transition-colors ${
+                      className={`px-3 py-1.5 rounded-[6px] border text-xs transition-colors cursor-pointer ${
                         activeNode.category === cat
-                          ? 'bg-indigo-600 border-indigo-500 text-white font-semibold'
-                          : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-slate-200'
+                          ? 'bg-[var(--text-1)] border-[var(--text-1)] text-[var(--surface-1)] font-medium'
+                          : 'bg-[var(--surface-3)] border-[var(--line-subtle)] text-[var(--text-3)] hover:text-[var(--text-1)]'
                       }`}
                     >
                       {cat === 'root_goal' && '根目标 (Root)'}
@@ -843,39 +859,41 @@ export const ReadingDrawer: React.FC<ReadingDrawerProps> = ({ onNavigateToNode }
           )}
         </div>
 
-        {/* 底部追问输入框（沉浸式聊天输入） */}
-        <div className="p-4 bg-slate-900/95 border-t border-slate-800 shrink-0">
-          <form onSubmit={handleFollowupSubmit} className="flex flex-col gap-2 max-w-4xl mx-auto">
-            <div className="flex items-center justify-between text-[11px] text-slate-400">
-              <span className="flex items-center gap-1.5">
-                <Share2 className="w-3.5 h-3.5 text-sky-400" />
-                <span className="text-slate-300 font-medium">继续追问</span>
-                <span className="text-slate-500">（将自动创建新分支节点进行推演）</span>
-              </span>
-              <span className="text-sky-400/80 font-mono text-[10px]">
-                输入时触发 X-Ray 链路光照
-              </span>
-            </div>
-
-            <div className="relative flex items-center">
+        {/* 底部悬浮推演舱 (Floating Elevated Input Pod, DESIGN.md §4.3) */}
+        <div className="px-5 pb-5 pt-3 bg-gradient-to-t from-[var(--surface-1)] via-[var(--surface-1)]/95 to-transparent shrink-0">
+          <form
+            onSubmit={handleFollowupSubmit}
+            className="flex flex-col gap-2 max-w-4xl mx-auto"
+          >
+            {/* 浮动输入胶囊容器 */}
+            <div className="relative flex items-center rounded-[16px] glass-elevated px-3 py-1.5 border border-[var(--line-default)] focus-within:border-[var(--accent-focus)] focus-within:shadow-[0_0_20px_var(--accent-focus-glow)] transition-all">
               <input
                 type="text"
                 value={followupQuery}
                 onChange={(e) => setFollowupQuery(e.target.value)}
                 onFocus={() => triggerXrayPreview(followupQuery)}
                 onBlur={() => clearXrayPreview()}
-                placeholder="在此输入新的追问或疑问，按 Enter 直接生成新分支..."
-                className="w-full pl-4 pr-24 py-3 bg-slate-950 border border-slate-700/80 rounded-xl text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/50 transition-all shadow-inner"
+                placeholder="输入推演追问，按 Enter 派生新分支节点..."
+                className="w-full py-1.5 px-1 bg-transparent text-sm text-[var(--text-1)] placeholder-[var(--text-3)] focus:outline-none font-normal"
               />
 
               <button
                 type="submit"
                 disabled={!followupQuery.trim() || isStreaming}
-                className="absolute right-2 px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-800 disabled:text-slate-500 text-white font-medium text-xs rounded-lg flex items-center gap-1.5 transition-all shadow-md cursor-pointer disabled:cursor-not-allowed"
+                className="w-8 h-8 rounded-full bg-[var(--text-1)] hover:opacity-90 disabled:bg-[var(--surface-3)] disabled:text-[var(--text-3)] text-[var(--surface-1)] font-semibold flex items-center justify-center transition-all cursor-pointer disabled:cursor-not-allowed shrink-0 active:scale-95 ml-2"
+                title="发送追问 (Enter)"
               >
-                <span>发送追问</span>
-                <Send className="w-3.5 h-3.5" />
+                <ArrowUp className="w-4 h-4" />
               </button>
+            </div>
+
+            {/* 辅助状态与提示 */}
+            <div className="flex items-center justify-between px-2 text-[10px] text-[var(--text-3)] font-mono">
+              <span>Enter 自动创建子节点并异步推演</span>
+              <span className="flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent-focus)]" />
+                聚焦时点亮 X-Ray
+              </span>
             </div>
           </form>
         </div>

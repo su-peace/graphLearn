@@ -51,12 +51,22 @@ export function calculateDagreLayout(
     }
   }
 
-  dagre.layout(g);
+  try {
+    dagre.layout(g);
+  } catch (err) {
+    console.warn('Dagre layout error, skipping graph relayout:', err);
+  }
 
   const positions: Record<string, { x: number; y: number }> = {};
   for (const node of Object.values(nodes)) {
     const nodeWithPos = g.node(node.id);
-    if (nodeWithPos) {
+    if (
+      nodeWithPos &&
+      typeof nodeWithPos.x === 'number' &&
+      typeof nodeWithPos.y === 'number' &&
+      !isNaN(nodeWithPos.x) &&
+      !isNaN(nodeWithPos.y)
+    ) {
       // dagre 返回的是中心点坐标，React Flow 需要左上角坐标
       positions[node.id] = {
         x: Math.round(nodeWithPos.x - nodeWidth / 2),

@@ -71,22 +71,22 @@ export const SessionManagerModal: React.FC = () => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4 animate-in fade-in select-none">
-      <div className="w-full max-w-3xl max-h-[85vh] rounded-2xl bg-slate-900 border border-slate-800 shadow-2xl overflow-hidden flex flex-col text-slate-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-md p-4 animate-in fade-in select-none">
+      <div className="w-full max-w-3xl max-h-[85vh] rounded-[16px] glass-elevated border border-[var(--line-default)] shadow-2xl overflow-hidden flex flex-col text-[var(--text-1)]">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800 bg-slate-950/60">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--line-subtle)] bg-[var(--surface-2)]/60">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center text-indigo-400">
+            <div className="w-8 h-8 rounded-[8px] bg-[var(--surface-3)] border border-[var(--line-subtle)] flex items-center justify-center text-[var(--accent-focus)]">
               <FolderOpen className="w-4 h-4" />
             </div>
             <div>
-              <h2 className="text-base font-bold text-slate-100 flex items-center gap-2">
+              <h2 className="text-base font-semibold text-[var(--text-1)] flex items-center gap-2">
                 <span>思维导图会话管理</span>
-                <span className="text-[11px] font-mono px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 border border-slate-700">
+                <span className="text-[11px] font-mono px-2 py-0.5 rounded-[4px] bg-[var(--surface-3)] text-[var(--text-3)] border border-[var(--line-subtle)]">
                   {sessions.length} 个存储会话
                 </span>
               </h2>
-              <span className="text-[11px] text-slate-400">
+              <span className="text-[11px] text-[var(--text-3)]">
                 本地优先存储于 IndexedDB，即开即用、自动实时保存
               </span>
             </div>
@@ -96,7 +96,7 @@ export const SessionManagerModal: React.FC = () => {
             <button
               onClick={() => setShowCreateForm((prev) => !prev)}
               type="button"
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-medium text-xs transition-colors cursor-pointer shadow-sm"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-[6px] bg-[var(--text-1)] hover:opacity-90 text-[var(--surface-1)] font-medium text-xs transition-colors cursor-pointer shadow-xs"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>新建会话</span>
@@ -104,7 +104,7 @@ export const SessionManagerModal: React.FC = () => {
 
             <button
               onClick={() => setIsSessionManagerOpen(false)}
-              className="p-1.5 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition-colors"
+              className="p-1.5 rounded-[8px] text-[var(--text-3)] hover:text-[var(--text-1)] hover:bg-[var(--surface-3)] transition-colors cursor-pointer"
             >
               <X className="w-4 h-4" />
             </button>
@@ -115,10 +115,10 @@ export const SessionManagerModal: React.FC = () => {
         {showCreateForm && (
           <form
             onSubmit={handleCreateSubmit}
-            className="p-4 bg-slate-950/80 border-b border-slate-800 flex flex-col gap-3 text-xs animate-in slide-in-from-top-2 duration-150"
+            className="p-4 bg-[var(--surface-2)] border-b border-[var(--line-subtle)] flex flex-col gap-3 text-xs animate-in slide-in-from-top-2 duration-150"
           >
-            <div className="font-semibold text-slate-200 flex items-center gap-1.5">
-              <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
+            <div className="font-semibold text-[var(--text-1)] flex items-center gap-1.5">
+              <Sparkles className="w-3.5 h-3.5 text-[var(--accent-focus)]" />
               <span>新建思维导图推演画布</span>
             </div>
 
@@ -128,14 +128,14 @@ export const SessionManagerModal: React.FC = () => {
                 value={newTitle}
                 onChange={(e) => setNewTitle(e.target.value)}
                 placeholder="请输入会话主题（例如：分布式一致性 Raft 算法攻坚）..."
-                className="flex-1 px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+                className="flex-1 px-3 py-2 bg-[var(--surface-1)] border border-[var(--line-subtle)] rounded-[8px] text-[var(--text-1)] placeholder-[var(--text-3)] focus:outline-none focus:border-[var(--accent-focus)]"
                 autoFocus
               />
 
               <select
                 value={selectedTemplate}
                 onChange={(e) => setSelectedTemplate(e.target.value as any)}
-                className="px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-slate-200 focus:outline-none focus:border-indigo-500"
+                className="px-3 py-2 bg-[var(--surface-1)] border border-[var(--line-subtle)] rounded-[8px] text-[var(--text-1)] focus:outline-none focus:border-[var(--accent-focus)]"
               >
                 <option value="blank">空白画布</option>
                 <option value="linux_vm">预置模板：Linux 虚拟内存实战</option>
@@ -144,7 +144,7 @@ export const SessionManagerModal: React.FC = () => {
 
               <button
                 type="submit"
-                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-medium rounded-lg transition-colors cursor-pointer"
+                className="px-4 py-2 bg-[var(--text-1)] hover:opacity-90 text-[var(--surface-1)] font-medium rounded-[8px] transition-colors cursor-pointer"
               >
                 创建
               </button>
@@ -153,18 +153,18 @@ export const SessionManagerModal: React.FC = () => {
         )}
 
         {/* 搜索过滤条 */}
-        <div className="px-6 py-2.5 bg-slate-950/40 border-b border-slate-800/60 flex items-center justify-between gap-4 text-xs">
+        <div className="px-6 py-2.5 bg-[var(--surface-2)]/40 border-b border-[var(--line-subtle)] flex items-center justify-between gap-4 text-xs">
           <div className="relative flex-1 max-w-sm">
-            <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-2.5" />
+            <Search className="w-3.5 h-3.5 text-[var(--text-3)] absolute left-3 top-2.5" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="搜索会话标题..."
-              className="w-full pl-8 pr-3 py-1.5 bg-slate-950 border border-slate-800 rounded-lg text-slate-200 placeholder-slate-500 focus:outline-none focus:border-slate-600"
+              className="w-full pl-8 pr-3 py-1.5 bg-[var(--surface-1)] border border-[var(--line-subtle)] rounded-[6px] text-[var(--text-1)] placeholder-[var(--text-3)] focus:outline-none focus:border-[var(--accent-focus)]"
             />
           </div>
-          <span className="text-[11px] text-slate-400">
+          <span className="text-[11px] text-[var(--text-3)]">
             点击任意会话即可无缝即时切换，状态完全隔离
           </span>
         </div>
@@ -172,7 +172,7 @@ export const SessionManagerModal: React.FC = () => {
         {/* 会话列表 */}
         <div className="flex-1 overflow-y-auto p-6 space-y-2.5">
           {filteredSessions.length === 0 ? (
-            <div className="text-center py-12 text-slate-500 text-xs">
+            <div className="text-center py-12 text-[var(--text-3)] text-xs">
               没有找到匹配的会话
             </div>
           ) : (
@@ -184,19 +184,19 @@ export const SessionManagerModal: React.FC = () => {
                 <div
                   key={s.graphId}
                   onClick={() => !isCurrent && switchSession(s.graphId)}
-                  className={`group relative p-3.5 rounded-xl border transition-all duration-150 flex items-center justify-between gap-3 ${
+                  className={`group relative p-3.5 rounded-[10px] border transition-all duration-150 flex items-center justify-between gap-3 ${
                     isCurrent
-                      ? 'bg-indigo-950/30 border-indigo-500/80 shadow-[0_0_15px_rgba(99,102,241,0.2)] ring-1 ring-indigo-500/40'
-                      : 'bg-slate-950/60 border-slate-800 hover:border-slate-700 hover:bg-slate-900/60 cursor-pointer'
+                      ? 'bg-[var(--surface-2)] border-[var(--accent-focus)] shadow-xs ring-1 ring-[var(--accent-focus)]'
+                      : 'bg-[var(--surface-2)]/50 border-[var(--line-subtle)] hover:border-[var(--line-strong)] hover:bg-[var(--surface-2)] cursor-pointer'
                   }`}
                 >
                   {/* 左侧元信息 */}
                   <div className="flex items-center gap-3 overflow-hidden flex-1">
                     <div
-                      className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${
+                      className={`w-9 h-9 rounded-[8px] flex items-center justify-center shrink-0 ${
                         isCurrent
-                          ? 'bg-indigo-600 text-white shadow-md'
-                          : 'bg-slate-800 text-slate-400 group-hover:text-slate-200'
+                          ? 'bg-[var(--accent-focus)] text-[var(--surface-1)] shadow-xs'
+                          : 'bg-[var(--surface-3)] text-[var(--text-3)] group-hover:text-[var(--text-1)]'
                       }`}
                     >
                       <Network className="w-4 h-4" />
@@ -212,7 +212,7 @@ export const SessionManagerModal: React.FC = () => {
                             type="text"
                             value={editTitle}
                             onChange={(e) => setEditTitle(e.target.value)}
-                            className="px-2 py-1 text-xs bg-slate-900 border border-indigo-500 rounded text-slate-100 focus:outline-none"
+                            className="px-2 py-1 text-xs bg-[var(--surface-1)] border border-[var(--accent-focus)] rounded text-[var(--text-1)] focus:outline-none"
                             autoFocus
                             onKeyDown={(e) => {
                               if (e.key === 'Enter') handleSaveRename(s.graphId);
@@ -221,7 +221,7 @@ export const SessionManagerModal: React.FC = () => {
                           />
                           <button
                             onClick={() => handleSaveRename(s.graphId)}
-                            className="p-1 rounded bg-indigo-600 text-white"
+                            className="p-1 rounded bg-[var(--text-1)] text-[var(--surface-1)]"
                           >
                             <Check className="w-3.5 h-3.5" />
                           </button>
@@ -229,29 +229,29 @@ export const SessionManagerModal: React.FC = () => {
                       ) : (
                         <div className="flex items-center gap-2">
                           <span
-                            className="font-bold text-slate-100 text-xs truncate"
+                            className="font-semibold text-[var(--text-1)] text-xs truncate"
                             title={s.title}
                           >
                             {s.title}
                           </span>
                           {isCurrent && (
-                            <span className="px-1.5 py-0.2 rounded text-[10px] font-medium bg-emerald-950 text-emerald-300 border border-emerald-800 shrink-0">
+                            <span className="px-1.5 py-0.2 rounded text-[10px] font-medium bg-[var(--accent-verified-bg)] text-[var(--accent-verified)] border border-[var(--accent-verified-border)] shrink-0">
                               当前会话
                             </span>
                           )}
                         </div>
                       )}
 
-                      <div className="flex items-center gap-3 text-[11px] text-slate-400">
+                      <div className="flex items-center gap-3 text-[11px] text-[var(--text-3)]">
                         <span className="flex items-center gap-1">
-                          <Network className="w-3 h-3 text-slate-500" />
+                          <Network className="w-3 h-3 text-[var(--text-3)]" />
                           <span>{s.nodeCount} 个节点</span>
                         </span>
                         <span className="flex items-center gap-1">
-                          <Clock className="w-3 h-3 text-slate-500" />
+                          <Clock className="w-3 h-3 text-[var(--text-3)]" />
                           <span>更新于 {new Date(s.updatedAt).toLocaleTimeString()}</span>
                         </span>
-                        <span className="font-mono text-[10px] text-slate-500">
+                        <span className="font-mono text-[10px] text-[var(--text-3)]">
                           {s.graphId}
                         </span>
                       </div>
@@ -260,13 +260,13 @@ export const SessionManagerModal: React.FC = () => {
 
                   {/* 右侧动作按钮 */}
                   <div
-                    className="flex items-center gap-1 text-slate-400"
+                    className="flex items-center gap-1 text-[var(--text-3)]"
                     onClick={(e) => e.stopPropagation()}
                   >
                     {!isCurrent && (
                       <button
                         onClick={() => switchSession(s.graphId)}
-                        className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-indigo-950/70 border border-indigo-600/40 hover:bg-indigo-900 text-indigo-300 text-xs font-medium transition-colors"
+                        className="flex items-center gap-1 px-2.5 py-1.5 rounded-[6px] bg-[var(--surface-3)] border border-[var(--line-subtle)] hover:bg-[var(--surface-1)] text-[var(--text-1)] text-xs font-medium transition-colors cursor-pointer"
                         title="切换到此会话"
                       >
                         <ExternalLink className="w-3 h-3" />
@@ -276,7 +276,7 @@ export const SessionManagerModal: React.FC = () => {
 
                     <button
                       onClick={() => handleStartRename(s)}
-                      className="p-1.5 rounded-lg hover:bg-slate-800 hover:text-slate-200 transition-colors"
+                      className="p-1.5 rounded-[6px] hover:bg-[var(--surface-3)] hover:text-[var(--text-1)] transition-colors cursor-pointer"
                       title="重命名会话"
                     >
                       <Edit2 className="w-3.5 h-3.5" />
@@ -284,7 +284,7 @@ export const SessionManagerModal: React.FC = () => {
 
                     <button
                       onClick={() => duplicateSession(s.graphId)}
-                      className="p-1.5 rounded-lg hover:bg-slate-800 hover:text-indigo-400 transition-colors"
+                      className="p-1.5 rounded-[6px] hover:bg-[var(--surface-3)] hover:text-[var(--accent-focus)] transition-colors cursor-pointer"
                       title="克隆会话副本"
                     >
                       <Copy className="w-3.5 h-3.5" />
@@ -292,7 +292,7 @@ export const SessionManagerModal: React.FC = () => {
 
                     <button
                       onClick={() => handleDelete(s)}
-                      className="p-1.5 rounded-lg hover:bg-slate-800 hover:text-rose-400 transition-colors"
+                      className="p-1.5 rounded-[6px] hover:bg-rose-500/10 hover:text-rose-500 transition-colors cursor-pointer"
                       title="删除会话"
                     >
                       <Trash2 className="w-3.5 h-3.5" />

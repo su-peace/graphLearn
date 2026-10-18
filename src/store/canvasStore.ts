@@ -48,10 +48,18 @@ interface CanvasState {
   isInspectorOpen: boolean;
   llmSettings: LLMSettings;
   toastMessage: string | null;
+  theme: 'light' | 'dark';
+  layoutVersion: number;
+  isCreateNodeOpen: boolean;
+  createNodeParentId: string | null;
 
   // Actions
   init: () => Promise<void>;
   setToastMessage: (msg: string | null) => void;
+  setTheme: (theme: 'light' | 'dark') => void;
+  toggleTheme: () => void;
+  openCreateNodeModal: (parentId?: string | null) => void;
+  closeCreateNodeModal: () => void;
 
   selectNode: (nodeId: string | null) => void;
   closeDrawer: () => void;
@@ -144,6 +152,31 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
   llmSettings: DEFAULT_SETTINGS,
   toastMessage: null,
   nodeToDeleteId: null,
+  layoutVersion: 0,
+  isCreateNodeOpen: false,
+  createNodeParentId: null,
+  theme: (typeof window !== 'undefined' && (localStorage.getItem('gl_theme') as 'light' | 'dark')) || 'dark',
+
+  openCreateNodeModal: (parentId?: string | null) =>
+    set({ isCreateNodeOpen: true, createNodeParentId: parentId ?? null }),
+
+  closeCreateNodeModal: () =>
+    set({ isCreateNodeOpen: false, createNodeParentId: null }),
+
+  setTheme: (t: 'light' | 'dark') => {
+    localStorage.setItem('gl_theme', t);
+    if (t === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+    set({ theme: t });
+  },
+
+  toggleTheme: () => {
+    const next = get().theme === 'dark' ? 'light' : 'dark';
+    get().setTheme(next);
+  },
 
   setNodeToDeleteId: (id: string | null) => set({ nodeToDeleteId: id }),
 
@@ -160,6 +193,14 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
   },
 
   init: async () => {
+    // 同步明暗主题 class
+    const initialTheme = get().theme;
+    if (initialTheme === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+
     try {
       const savedSettings = await loadSettingsFromDB();
       if (savedSettings && savedSettings.apiKey) {
@@ -653,7 +694,10 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
       updatedAt: Date.now(),
     };
 
-    set({ graph: updatedGraph });
+    set((state) => ({
+      graph: updatedGraph,
+      layoutVersion: state.layoutVersion + 1,
+    }));
     saveGraphToDB(updatedGraph);
   },
 
