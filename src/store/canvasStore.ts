@@ -12,10 +12,12 @@ import type {
 } from '../types/canvas';
 import { INITIAL_DEMO_GRAPH, RPC_DEMO_GRAPH, createBlankGraph } from '../data/demoGraph';
 import { calculateDagreLayout } from '../services/graphLayout';
+import { validateNodeConnection } from '../services/graphTopology';
 import { compilerClient } from '../worker/workerClient';
 import { streamLLMResponse } from '../services/llmService';
 import { extractArtifactFromContent } from '../services/artifactExtractor';
 import { estimateTokens, estimateTokensFast } from '../services/tokenEstimator';
+import { exportToJSON, exportToMarkdown } from '../services/exportService';
 import {
   loadGraphFromDB,
   loadLatestGraph,
@@ -52,6 +54,14 @@ interface CanvasState {
   layoutVersion: number;
   isCreateNodeOpen: boolean;
   createNodeParentId: string | null;
+  isConnectModalOpen: boolean;
+  connectModalSourceId: string | null;
+  connectModalTargetId: string | null;
+  isExportModalOpen: boolean;
+  historyPast: CanvasGraph[];
+  historyFuture: CanvasGraph[];
+  canUndo: boolean;
+  canRedo: boolean;
 
   // Actions
   init: () => Promise<void>;
@@ -60,6 +70,19 @@ interface CanvasState {
   toggleTheme: () => void;
   openCreateNodeModal: (parentId?: string | null) => void;
   closeCreateNodeModal: () => void;
+  openConnectModal: (sourceId?: string | null, targetId?: string | null) => void;
+  closeConnectModal: () => void;
+  openExportModal: () => void;
+  closeExportModal: () => void;
+  setIsExportModalOpen: (open: boolean) => void;
+  undo: () => void;
+  redo: () => void;
+  updateNodeTitle: (nodeId: string, title: string) => void;
+  updateNodeTakeaway: (nodeId: string, coreTakeaway: string) => void;
+  updateNodeStatus: (nodeId: string, status: EpistemicStatus) => void;
+  updateManualState: (nodeId: string, manualState: ManualState) => void;
+  reparentNodes: (childId: string, parentIds: string[]) => { success: boolean; reason?: string };
+  updateNodePositions: (positions: Record<string, { x: number; y: number }>) => void;
 
   selectNode: (nodeId: string | null) => void;
   closeDrawer: () => void;
@@ -79,7 +102,8 @@ interface CanvasState {
     category?: NodeCategory;
     autoTriggerStream?: boolean;
   }) => Promise<string>;
-  connectNodes: (sourceId: string, targetId: string) => void;
+  connectNodes: (sourceId: string, targetId: string) => { success: boolean; reason?: string };
+  disconnectNodes: (sourceId: string, targetId: string) => void;
   deleteNode: (nodeId: string) => void;
   nodeToDeleteId: string | null;
   setNodeToDeleteId: (id: string | null) => void;
@@ -133,6 +157,13 @@ const DEFAULT_SETTINGS: LLMSettings = {
   useProxy: true,
 };
 
+const MAX_HISTORY = 30;
+
+function pushSnapshot(graph: CanvasGraph, past: CanvasGraph[]): CanvasGraph[] {
+  const cloned = JSON.parse(JSON.stringify(graph)) as CanvasGraph;
+  return [...past, cloned].slice(-MAX_HISTORY);
+}
+
 export const useCanvasStore = create<CanvasState>((set, get) => ({
   graph: INITIAL_DEMO_GRAPH,
   activeNodeId: 'node_page_fault',
@@ -155,6 +186,14 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
   layoutVersion: 0,
   isCreateNodeOpen: false,
   createNodeParentId: null,
+  isConnectModalOpen: false,
+  connectModalSourceId: null,
+  connectModalTargetId: null,
+  isExportModalOpen: false,
+  historyPast: [],
+  historyFuture: [],
+  canUndo: false,
+  canRedo: false,
   theme: (typeof window !== 'undefined' && (localStorage.getItem('gl_theme') as 'light' | 'dark')) || 'dark',
 
   openCreateNodeModal: (parentId?: string | null) =>
@@ -162,6 +201,24 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
 
   closeCreateNodeModal: () =>
     set({ isCreateNodeOpen: false, createNodeParentId: null }),
+
+  openConnectModal: (sourceId?: string | null, targetId?: string | null) =>
+    set({
+      isConnectModalOpen: true,
+      connectModalSourceId: sourceId ?? null,
+      connectModalTargetId: targetId ?? null,
+    }),
+
+  closeConnectModal: () =>
+    set({
+      isConnectModalOpen: false,
+      connectModalSourceId: null,
+      connectModalTargetId: null,
+    }),
+
+  openExportModal: () => set({ isExportModalOpen: true }),
+  closeExportModal: () => set({ isExportModalOpen: false }),
+  setIsExportModalOpen: (open: boolean) => set({ isExportModalOpen: open }),
 
   setTheme: (t: 'light' | 'dark') => {
     localStorage.setItem('gl_theme', t);
@@ -286,6 +343,10 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
       isXrayActive: false,
       xrayStatus: {},
       isSessionManagerOpen: false,
+      historyPast: [],
+      historyFuture: [],
+      canUndo: false,
+      canRedo: false,
     });
 
     await get().refreshSessionList();
@@ -326,6 +387,10 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
       isXrayActive: false,
       xrayStatus: {},
       isSessionManagerOpen: false,
+      historyPast: [],
+      historyFuture: [],
+      canUndo: false,
+      canRedo: false,
     });
 
     await get().refreshSessionList();
@@ -441,15 +506,58 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
   },
 
   setNodeStatus: (nodeId: string, status: EpistemicStatus) => {
+    const historyPast = pushSnapshot(get().graph, get().historyPast);
+    set({ historyPast, historyFuture: [], canUndo: true, canRedo: false });
     get().updateNodeData(nodeId, { status }, 'immediate');
   },
 
+  updateNodeStatus: (nodeId: string, status: EpistemicStatus) => {
+    get().setNodeStatus(nodeId, status);
+  },
+
   setNodeManualState: (nodeId: string, manualState: ManualState) => {
+    const historyPast = pushSnapshot(get().graph, get().historyPast);
+    set({ historyPast, historyFuture: [], canUndo: true, canRedo: false });
     get().updateNodeData(nodeId, { manualState }, 'immediate');
   },
 
+  updateManualState: (nodeId: string, manualState: ManualState) => {
+    get().setNodeManualState(nodeId, manualState);
+  },
+
   setNodeCategory: (nodeId: string, category: NodeCategory) => {
+    const historyPast = pushSnapshot(get().graph, get().historyPast);
+    set({ historyPast, historyFuture: [], canUndo: true, canRedo: false });
     get().updateNodeData(nodeId, { category }, 'immediate');
+  },
+
+  updateNodeTitle: (nodeId: string, title: string) => {
+    const { graph } = get();
+    const node = graph.nodes[nodeId];
+    if (!node || node.title === title) return;
+    const historyPast = pushSnapshot(graph, get().historyPast);
+    set({ historyPast, historyFuture: [], canUndo: true, canRedo: false });
+    get().updateNodeData(nodeId, { title }, 'debounced');
+  },
+
+  updateNodeTakeaway: (nodeId: string, coreTakeaway: string) => {
+    const { graph } = get();
+    const node = graph.nodes[nodeId];
+    if (!node) return;
+    const currentTakeaway = node.artifact?.coreTakeaway || '';
+    if (currentTakeaway === coreTakeaway) return;
+    const historyPast = pushSnapshot(graph, get().historyPast);
+    set({ historyPast, historyFuture: [], canUndo: true, canRedo: false });
+    const artifact = node.artifact
+      ? { ...node.artifact, coreTakeaway }
+      : {
+          title: node.title,
+          category: node.category,
+          coreTakeaway,
+          hardInvariants: [],
+          codeSignatures: [],
+        };
+    get().updateNodeData(nodeId, { artifact }, 'debounced');
   },
 
   addNode: async (params) => {
@@ -498,10 +606,15 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
       },
     };
 
+    const historyPast = pushSnapshot(graph, get().historyPast);
     set({
       graph: updatedGraph,
       activeNodeId: id,
       isDrawerOpen: true,
+      historyPast,
+      historyFuture: [],
+      canUndo: true,
+      canRedo: false,
     });
 
     saveGraphToDB(updatedGraph);
@@ -517,13 +630,105 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
 
   connectNodes: (sourceId: string, targetId: string) => {
     const { graph } = get();
+    const validation = validateNodeConnection(graph.nodes, sourceId, targetId);
+    if (!validation.isValid) {
+      get().setToastMessage(validation.reason || '无法建立连接');
+      return { success: false, reason: validation.reason };
+    }
+
     const targetNode = graph.nodes[targetId];
-    if (!targetNode || sourceId === targetId) return;
+    const sourceNode = graph.nodes[sourceId];
+    const historyPast = pushSnapshot(graph, get().historyPast);
+    set({
+      historyPast,
+      historyFuture: [],
+      canUndo: true,
+      canRedo: false,
+    });
+    const updatedParentIds = [...(targetNode.parentIds || []), sourceId];
+    get().updateNodeData(targetId, { parentIds: updatedParentIds }, 'immediate');
 
-    if (targetNode.parentIds.includes(sourceId)) return;
+    const sourceTitle = sourceNode?.title || sourceId;
+    const targetTitle = targetNode?.title || targetId;
+    get().setToastMessage(`已建立拓扑联系：「${sourceTitle}」➔「${targetTitle}」`);
+    return { success: true };
+  },
 
-    const updatedParentIds = [...targetNode.parentIds, sourceId];
-    get().updateNodeData(targetId, { parentIds: updatedParentIds });
+  disconnectNodes: (sourceId: string, targetId: string) => {
+    const { graph } = get();
+    const targetNode = graph.nodes[targetId];
+    const sourceNode = graph.nodes[sourceId];
+    if (!targetNode || !targetNode.parentIds) return;
+
+    if (!targetNode.parentIds.includes(sourceId)) return;
+
+    const historyPast = pushSnapshot(graph, get().historyPast);
+    set({
+      historyPast,
+      historyFuture: [],
+      canUndo: true,
+      canRedo: false,
+    });
+    const updatedParentIds = targetNode.parentIds.filter((pid) => pid !== sourceId);
+    get().updateNodeData(targetId, { parentIds: updatedParentIds }, 'immediate');
+
+    const sourceTitle = sourceNode?.title || sourceId;
+    const targetTitle = targetNode?.title || targetId;
+    get().setToastMessage(`已断开连接：「${sourceTitle}」与「${targetTitle}」`);
+  },
+
+  reparentNodes: (childId: string, parentIds: string[]) => {
+    const { graph } = get();
+    const child = graph.nodes[childId];
+    if (!child) return { success: false, reason: '目标节点不存在' };
+
+    if (parentIds.includes(childId)) {
+      return { success: false, reason: '节点不能将自身设为父节点' };
+    }
+
+    for (const pid of parentIds) {
+      if (!graph.nodes[pid]) {
+        return { success: false, reason: `父节点 ${pid} 不存在` };
+      }
+      if (!child.parentIds?.includes(pid)) {
+        const val = validateNodeConnection(graph.nodes, pid, childId);
+        if (!val.isValid) {
+          return { success: false, reason: val.reason };
+        }
+      }
+    }
+
+    const historyPast = pushSnapshot(graph, get().historyPast);
+    set({ historyPast, historyFuture: [], canUndo: true, canRedo: false });
+    get().updateNodeData(childId, { parentIds }, 'immediate');
+    return { success: true };
+  },
+
+  updateNodePositions: (positions: Record<string, { x: number; y: number }>) => {
+    const { graph } = get();
+    const historyPast = pushSnapshot(graph, get().historyPast);
+    const updatedNodes = { ...graph.nodes };
+    for (const [id, pos] of Object.entries(positions)) {
+      if (updatedNodes[id]) {
+        updatedNodes[id] = {
+          ...updatedNodes[id],
+          position: pos,
+        };
+      }
+    }
+    const updatedGraph: CanvasGraph = {
+      ...graph,
+      nodes: updatedNodes,
+      updatedAt: Date.now(),
+    };
+    set({
+      graph: updatedGraph,
+      historyPast,
+      historyFuture: [],
+      canUndo: true,
+      canRedo: false,
+    });
+    saveGraphToDBDebounced(updatedGraph, 400);
   },
 
   deleteNode: (nodeId: string) => {
@@ -609,10 +814,15 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
       nodes: newNodes,
     };
 
+    const historyPast = pushSnapshot(graph, get().historyPast);
     set({
       graph: updatedGraph,
       activeNodeId: newNodes[activeNodeId || ''] ? activeNodeId : graph.rootNodeId,
       nodeToDeleteId: null,
+      historyPast,
+      historyFuture: [],
+      canUndo: true,
+      canRedo: false,
     });
 
     saveGraphToDB(updatedGraph);
@@ -694,9 +904,14 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
       updatedAt: Date.now(),
     };
 
+    const historyPast = pushSnapshot(graph, get().historyPast);
     set((state) => ({
       graph: updatedGraph,
       layoutVersion: state.layoutVersion + 1,
+      historyPast,
+      historyFuture: [],
+      canUndo: true,
+      canRedo: false,
     }));
     saveGraphToDB(updatedGraph);
   },
@@ -870,6 +1085,106 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
     saveSettingsToDB(updated);
   },
 
+  undo: () => {
+    const { historyPast, historyFuture, graph, isStreaming, activeNodeId } = get();
+    if (isStreaming || historyPast.length === 0) return;
+    const previous = historyPast[historyPast.length - 1];
+    const newPast = historyPast.slice(0, -1);
+    const currentCloned = JSON.parse(JSON.stringify(graph)) as CanvasGraph;
+    const newFuture = [currentCloned, ...historyFuture].slice(0, MAX_HISTORY);
+    const restoredActiveId =
+      activeNodeId && previous.nodes[activeNodeId]
+        ? activeNodeId
+        : previous.rootNodeId;
+
+    set({
+      graph: previous,
+      activeNodeId: restoredActiveId,
+      historyPast: newPast,
+      historyFuture: newFuture,
+      canUndo: newPast.length > 0,
+      canRedo: true,
+      layoutVersion: get().layoutVersion + 1,
+    });
+
+    saveGraphToDBDebounced(previous, 400);
+
+    // 触发 Worker 异步编译
+    if (restoredActiveId && previous.nodes[restoredActiveId]) {
+      const query = previous.nodes[restoredActiveId].userQuery || '';
+      compilerClient
+        .compile({
+          graph: previous,
+          activeNodeId: restoredActiveId,
+          currentQuery: query,
+        })
+        .then((res) => {
+          if (get().isXrayActive) {
+            set({
+              xrayStatus: res.xrayNodeStatus,
+              compiledPrompt: res.compiledPrompt,
+              compiledDurationMs: res.executionDurationMs,
+            });
+          }
+        })
+        .catch((err) => {
+          console.warn('[Undo] Worker compilation error:', err);
+        });
+    }
+
+    get().setToastMessage('已撤销上一步操作');
+  },
+
+  redo: () => {
+    const { historyPast, historyFuture, graph, isStreaming, activeNodeId } = get();
+    if (isStreaming || historyFuture.length === 0) return;
+    const next = historyFuture[0];
+    const newFuture = historyFuture.slice(1);
+    const currentCloned = JSON.parse(JSON.stringify(graph)) as CanvasGraph;
+    const newPast = [...historyPast, currentCloned].slice(-MAX_HISTORY);
+    const restoredActiveId =
+      activeNodeId && next.nodes[activeNodeId]
+        ? activeNodeId
+        : next.rootNodeId;
+
+    set({
+      graph: next,
+      activeNodeId: restoredActiveId,
+      historyPast: newPast,
+      historyFuture: newFuture,
+      canUndo: true,
+      canRedo: newFuture.length > 0,
+      layoutVersion: get().layoutVersion + 1,
+    });
+
+    saveGraphToDBDebounced(next, 400);
+
+    // 触发 Worker 异步编译
+    if (restoredActiveId && next.nodes[restoredActiveId]) {
+      const query = next.nodes[restoredActiveId].userQuery || '';
+      compilerClient
+        .compile({
+          graph: next,
+          activeNodeId: restoredActiveId,
+          currentQuery: query,
+        })
+        .then((res) => {
+          if (get().isXrayActive) {
+            set({
+              xrayStatus: res.xrayNodeStatus,
+              compiledPrompt: res.compiledPrompt,
+              compiledDurationMs: res.executionDurationMs,
+            });
+          }
+        })
+        .catch((err) => {
+          console.warn('[Redo] Worker compilation error:', err);
+        });
+    }
+
+    get().setToastMessage('已重做下一步操作');
+  },
+
   resetToDemo: () => {
     set({
       graph: INITIAL_DEMO_GRAPH,
@@ -877,14 +1192,17 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
       isDrawerOpen: true,
       isXrayActive: false,
       xrayStatus: {},
+      historyPast: [],
+      historyFuture: [],
+      canUndo: false,
+      canRedo: false,
     });
     saveGraphToDB(INITIAL_DEMO_GRAPH);
     get().refreshSessionList();
   },
 
   exportGraphJson: () => {
-    const { graph } = get();
-    return JSON.stringify(graph, null, 2);
+    return exportToJSON(get().graph);
   },
 
   importGraphJson: (json: string) => {
@@ -899,6 +1217,10 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
           graph: parsed,
           activeNodeId: parsed.rootNodeId,
           isDrawerOpen: false,
+          historyPast: [],
+          historyFuture: [],
+          canUndo: false,
+          canRedo: false,
         });
 
         get().refreshSessionList();
@@ -911,27 +1233,6 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
   },
 
   exportMarkdownReport: () => {
-    const { graph } = get();
-    let md = `# ${graph.title} - 知识复盘报告\n\n`;
-    md += `> 生成时间：${new Date().toLocaleString()}\n`;
-    md += `> 节点总数：${Object.keys(graph.nodes).length} | 根节点：${graph.nodes[graph.rootNodeId]?.title || graph.rootNodeId}\n\n`;
-
-    md += `## 1. 核心推演脉络\n\n`;
-    for (const node of Object.values(graph.nodes)) {
-      md += `### [${node.category.toUpperCase()}] ${node.title} (${node.status})\n`;
-      md += `- **提问**：${node.userQuery}\n`;
-      if (node.artifact) {
-        md += `- **核心结论**：${node.artifact.coreTakeaway}\n`;
-        if (node.artifact.hardInvariants.length > 0) {
-          md += `- **硬核不变量**：${node.artifact.hardInvariants.join(', ')}\n`;
-        }
-        if (node.artifact.codeSignatures.length > 0) {
-          md += `- **代码签名**：\n\`\`\`c\n${node.artifact.codeSignatures.join('\n')}\n\`\`\`\n`;
-        }
-      }
-      md += `\n**详细推演解答**：\n${node.aiResponse || '（暂无回答）'}\n\n---\n\n`;
-    }
-
-    return md;
+    return exportToMarkdown(get().graph);
   },
 }));

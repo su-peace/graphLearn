@@ -15,10 +15,17 @@ import { ZoomIn, ZoomOut, Maximize, MapPin, Eye } from 'lucide-react';
 import { useCanvasStore } from '../../store/canvasStore';
 import { flushSaveGraphToDB } from '../../db/database';
 import { CapsuleNode } from './CapsuleNode';
+import { InteractiveMindMapEdge } from './InteractiveMindMapEdge';
+import { wouldCreateCycle } from '../../services/graphTopology';
 import type { CanvasNodeData } from '../../types/canvas';
 
 const nodeTypes = {
   capsule: CapsuleNode,
+};
+
+const edgeTypes = {
+  smoothstep: InteractiveMindMapEdge,
+  interactive: InteractiveMindMapEdge,
 };
 
 const MindMapCanvasInternal: React.FC<{
@@ -27,6 +34,7 @@ const MindMapCanvasInternal: React.FC<{
   const graph = useCanvasStore((s) => s.graph);
   const selectNode = useCanvasStore((s) => s.selectNode);
   const connectNodes = useCanvasStore((s) => s.connectNodes);
+  const disconnectNodes = useCanvasStore((s) => s.disconnectNodes);
   const updateNodeData = useCanvasStore((s) => s.updateNodeData);
   const isXrayActive = useCanvasStore((s) => s.isXrayActive);
   const xrayStatus = useCanvasStore((s) => s.xrayStatus);
@@ -109,7 +117,7 @@ const MindMapCanvasInternal: React.FC<{
               id: edgeId,
               source: parentId,
               target: node.id,
-              type: 'smoothstep',
+              type: 'interactive',
               animated: isXrayActive && targetXray === 'full',
               className: edgeClass,
             });
@@ -129,6 +137,32 @@ const MindMapCanvasInternal: React.FC<{
       }
     },
     [connectNodes]
+  );
+
+  // 连线动态合法性实时校验 (DAG 拓扑防环)
+  const isValidConnection = useCallback(
+    (connection: Connection | Edge) => {
+      if (!connection.source || !connection.target) return false;
+      if (connection.source === connection.target) return false;
+      const targetNode = graph.nodes[connection.target];
+      if (!targetNode) return false;
+      if (targetNode.parentIds && targetNode.parentIds.includes(connection.source)) return false;
+      if (wouldCreateCycle(graph.nodes, connection.source, connection.target)) return false;
+      return true;
+    },
+    [graph.nodes]
+  );
+
+  // 键盘 Delete 选中连线时断开关联
+  const handleEdgesDelete = useCallback(
+    (deletedEdges: Edge[]) => {
+      for (const edge of deletedEdges) {
+        if (edge.source && edge.target) {
+          disconnectNodes(edge.source, edge.target);
+        }
+      }
+    },
+    [disconnectNodes]
   );
 
   // 拖拽节点更新坐标（内存更新 + 防抖落库）
@@ -154,9 +188,13 @@ const MindMapCanvasInternal: React.FC<{
         nodes={flowNodes}
         edges={flowEdges}
         nodeTypes={nodeTypes}
+        edgeTypes={edgeTypes}
         onNodesChange={handleNodesChange}
         onNodeDragStop={handleNodeDragStop}
         onConnect={handleConnect}
+        isValidConnection={isValidConnection}
+        onEdgesDelete={handleEdgesDelete}
+        connectionLineStyle={{ stroke: 'var(--accent-focus)', strokeWidth: 2, strokeDasharray: '4 4' }}
         onNodeClick={(_, node) => selectNode(node.id)}
         onPaneClick={() => {
           // 点击空白区域取消高亮但保留活跃节点

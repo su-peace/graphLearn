@@ -17,8 +17,19 @@ import {
   Maximize2,
   Minimize2,
   ArrowUp,
+  GitFork,
+  Link2,
+  Plus,
+  ExternalLink,
+  Unlink,
 } from 'lucide-react';
 import { useCanvasStore } from '../../store/canvasStore';
+import {
+  getNodeParents,
+  getNodeChildren,
+  getAvailableParentCandidates,
+  getAvailableChildCandidates,
+} from '../../services/graphTopology';
 import type { NodeCategory } from '../../types/canvas';
 import { CitationPill } from './CitationPill';
 import { FloatingBubbleMenu } from './FloatingBubbleMenu';
@@ -93,12 +104,17 @@ export const ReadingDrawer: React.FC<ReadingDrawerProps> = ({ onNavigateToNode }
   const clearXrayPreview = useCanvasStore((s) => s.clearXrayPreview);
   const addNode = useCanvasStore((s) => s.addNode);
   const setNodeToDeleteId = useCanvasStore((s) => s.setNodeToDeleteId);
+  const connectNodes = useCanvasStore((s) => s.connectNodes);
+  const disconnectNodes = useCanvasStore((s) => s.disconnectNodes);
+  const openConnectModal = useCanvasStore((s) => s.openConnectModal);
 
   // 侧边栏宽度模式: 标准 (500px), 宽屏舒适 (760px), 沉浸超宽 (960px)
   const [widthMode, setWidthMode] = useState<'standard' | 'wide' | 'ultra'>('wide');
 
-  // 当前主视图标签: 'chat' (推演对话, 核心主角) | 'artifact' (知识卡) | 'docs' (挂载资料) | 'meta' (属性门控)
-  const [activeTab, setActiveTab] = useState<'chat' | 'artifact' | 'docs' | 'meta'>('chat');
+  // 当前主视图标签: 'chat' | 'artifact' | 'docs' | 'topology' | 'meta'
+  const [activeTab, setActiveTab] = useState<'chat' | 'artifact' | 'docs' | 'topology' | 'meta'>('chat');
+  const [selectedParentToAdd, setSelectedParentToAdd] = useState('');
+  const [selectedChildToAdd, setSelectedChildToAdd] = useState('');
 
   const [followupQuery, setFollowupQuery] = useState('');
   const [copiedAll, setCopiedAll] = useState(false);
@@ -532,6 +548,20 @@ export const ReadingDrawer: React.FC<ReadingDrawerProps> = ({ onNavigateToNode }
             </button>
 
             <button
+              onClick={() => setActiveTab('topology')}
+              className={`py-2.5 border-b-2 font-medium transition-all cursor-pointer flex items-center gap-1.5 ${
+                activeTab === 'topology'
+                  ? 'border-[var(--accent-focus)] text-[var(--text-1)] font-semibold'
+                  : 'border-transparent text-[var(--text-3)] hover:text-[var(--text-1)]'
+              }`}
+            >
+              <span>拓扑关联</span>
+              <span className="text-[10px] px-1 rounded-full bg-[var(--surface-3)] font-mono text-[var(--text-3)]">
+                {activeNode.parentIds?.length || 0}
+              </span>
+            </button>
+
+            <button
               onClick={() => setActiveTab('meta')}
               className={`py-2.5 border-b-2 font-medium transition-all cursor-pointer ${
                 activeTab === 'meta'
@@ -853,6 +883,229 @@ export const ReadingDrawer: React.FC<ReadingDrawerProps> = ({ onNavigateToNode }
                       {cat === 'chitchat_debug' && '微调纠错 (Debug)'}
                     </button>
                   ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* TAB 5: 拓扑关联关系管理 (Topology Connections) */}
+          {activeTab === 'topology' && (
+            <div className="space-y-6 max-w-3xl mx-auto text-xs">
+              {/* 顶栏说明与全局向导按钮 */}
+              <div className="flex items-center justify-between p-4 rounded-[12px] bg-[var(--surface-2)] border border-[var(--line-default)]">
+                <div>
+                  <div className="font-semibold text-sm text-[var(--text-1)] flex items-center gap-2">
+                    <GitFork className="w-4 h-4 text-[var(--accent-focus)]" />
+                    <span>DAG 拓扑认知关联网络</span>
+                  </div>
+                  <div className="text-[11px] text-[var(--text-3)] mt-0.5">
+                    为当前节点指定前置输入或建立下游派生，系统将在 Prompt 编译时自动沿拓扑聚合上下文
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => openConnectModal(activeNode.id)}
+                  className="px-3 py-1.5 rounded-[8px] bg-[var(--accent-primary)] text-[var(--accent-fg)] hover:opacity-90 font-medium text-xs flex items-center gap-1.5 shadow-xs cursor-pointer shrink-0"
+                >
+                  <Link2 className="w-3.5 h-3.5" />
+                  <span>全局连线向导</span>
+                </button>
+              </div>
+
+              {/* 上级前置依赖节点 (Parents) */}
+              <div className="p-4 rounded-[12px] bg-[var(--surface-2)] border border-[var(--line-default)] space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="font-semibold text-sm text-[var(--text-1)]">
+                      前置依赖节点 (Predecessor Parents)
+                    </span>
+                    <span className="px-1.5 py-0.5 rounded-full bg-[var(--surface-3)] text-[10px] font-mono text-[var(--text-3)]">
+                      {getNodeParents(graph, activeNode.id).length} 个
+                    </span>
+                  </div>
+                  <span className="text-[11px] text-[var(--text-3)]">推演时的直接知识输入来源</span>
+                </div>
+
+                {/* 现存前置列表 */}
+                {getNodeParents(graph, activeNode.id).length > 0 ? (
+                  <div className="space-y-2">
+                    {getNodeParents(graph, activeNode.id).map((parentNode) => (
+                      <div
+                        key={parentNode.id}
+                        className="p-3 rounded-[8px] bg-[var(--surface-1)] border border-[var(--line-subtle)] flex items-center justify-between gap-3 hover:border-[var(--line-default)] transition-colors"
+                      >
+                        <div className="flex items-center gap-2.5 overflow-hidden">
+                          <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-[var(--surface-3)] text-[var(--text-3)] shrink-0">
+                            {parentNode.category}
+                          </span>
+                          <span className="font-semibold text-[13px] text-[var(--text-1)] truncate">
+                            {parentNode.title || parentNode.id}
+                          </span>
+                          <span className="text-[10px] text-[var(--text-3)] font-mono hidden sm:inline shrink-0">
+                            ({parentNode.id})
+                          </span>
+                        </div>
+
+                        <div className="flex items-center gap-2 shrink-0">
+                          {onNavigateToNode && (
+                            <button
+                              type="button"
+                              onClick={() => onNavigateToNode(parentNode.id)}
+                              className="px-2 py-1 rounded-[6px] hover:bg-[var(--surface-2)] text-[var(--text-2)] hover:text-[var(--text-1)] text-[11px] transition-colors flex items-center gap-1 cursor-pointer"
+                              title="在画布中定位此节点"
+                            >
+                              <ExternalLink className="w-3 h-3" />
+                              <span>定位</span>
+                            </button>
+                          )}
+
+                          <button
+                            type="button"
+                            onClick={() => disconnectNodes(parentNode.id, activeNode.id)}
+                            className="px-2 py-1 rounded-[6px] hover:bg-rose-500/10 text-rose-500 hover:text-rose-600 text-[11px] transition-colors flex items-center gap-1 cursor-pointer"
+                            title="断开与该前置节点的关联"
+                          >
+                            <Unlink className="w-3 h-3" />
+                            <span>断开</span>
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="p-3 rounded-[8px] bg-[var(--surface-1)] border border-dashed border-[var(--line-default)] text-center text-[var(--text-3)] text-xs">
+                    当前节点暂无前置依赖（作为独立起始探索点）
+                  </div>
+                )}
+
+                {/* 添加前置关联控件 */}
+                <div className="pt-2 border-t border-[var(--line-subtle)] flex items-center gap-2">
+                  <select
+                    value={selectedParentToAdd}
+                    onChange={(e) => setSelectedParentToAdd(e.target.value)}
+                    className="flex-1 px-3 py-1.5 bg-[var(--surface-1)] border border-[var(--line-default)] focus:border-[var(--accent-focus)] rounded-[6px] text-xs text-[var(--text-1)] outline-none cursor-pointer"
+                  >
+                    <option value="">-- 选择已有节点作为前置依赖 --</option>
+                    {getAvailableParentCandidates(graph, activeNode.id).map((cand) => (
+                      <option key={cand.id} value={cand.id}>
+                        {cand.title} ({cand.id})
+                      </option>
+                    ))}
+                  </select>
+
+                  <button
+                    type="button"
+                    disabled={!selectedParentToAdd}
+                    onClick={() => {
+                      if (selectedParentToAdd) {
+                        connectNodes(selectedParentToAdd, activeNode.id);
+                        setSelectedParentToAdd('');
+                      }
+                    }}
+                    className="px-3 py-1.5 rounded-[6px] bg-[var(--text-1)] hover:opacity-90 disabled:opacity-40 text-[var(--surface-1)] font-medium text-xs flex items-center gap-1.5 transition-all cursor-pointer disabled:cursor-not-allowed shrink-0"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>关联为前置</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* 下游派生节点 (Children) */}
+              <div className="p-4 rounded-[12px] bg-[var(--surface-2)] border border-[var(--line-default)] space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="font-semibold text-sm text-[var(--text-1)]">
+                      下游派生节点 (Successor Children)
+                    </span>
+                    <span className="px-1.5 py-0.5 rounded-full bg-[var(--surface-3)] text-[10px] font-mono text-[var(--text-3)]">
+                      {getNodeChildren(graph, activeNode.id).length} 个
+                    </span>
+                  </div>
+                  <span className="text-[11px] text-[var(--text-3)]">继承当前节点结论的下级分支</span>
+                </div>
+
+                {/* 现存子节点列表 */}
+                {getNodeChildren(graph, activeNode.id).length > 0 ? (
+                  <div className="space-y-2">
+                    {getNodeChildren(graph, activeNode.id).map((childNode) => (
+                      <div
+                        key={childNode.id}
+                        className="p-3 rounded-[8px] bg-[var(--surface-1)] border border-[var(--line-subtle)] flex items-center justify-between gap-3 hover:border-[var(--line-default)] transition-colors"
+                      >
+                        <div className="flex items-center gap-2.5 overflow-hidden">
+                          <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-[var(--surface-3)] text-[var(--text-3)] shrink-0">
+                            {childNode.category}
+                          </span>
+                          <span className="font-semibold text-[13px] text-[var(--text-1)] truncate">
+                            {childNode.title || childNode.id}
+                          </span>
+                          <span className="text-[10px] text-[var(--text-3)] font-mono hidden sm:inline shrink-0">
+                            ({childNode.id})
+                          </span>
+                        </div>
+
+                        <div className="flex items-center gap-2 shrink-0">
+                          {onNavigateToNode && (
+                            <button
+                              type="button"
+                              onClick={() => onNavigateToNode(childNode.id)}
+                              className="px-2 py-1 rounded-[6px] hover:bg-[var(--surface-2)] text-[var(--text-2)] hover:text-[var(--text-1)] text-[11px] transition-colors flex items-center gap-1 cursor-pointer"
+                              title="在画布中定位此节点"
+                            >
+                              <ExternalLink className="w-3 h-3" />
+                              <span>定位</span>
+                            </button>
+                          )}
+
+                          <button
+                            type="button"
+                            onClick={() => disconnectNodes(activeNode.id, childNode.id)}
+                            className="px-2 py-1 rounded-[6px] hover:bg-rose-500/10 text-rose-500 hover:text-rose-600 text-[11px] transition-colors flex items-center gap-1 cursor-pointer"
+                            title="断开与该下游节点的关联"
+                          >
+                            <Unlink className="w-3 h-3" />
+                            <span>断开</span>
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="p-3 rounded-[8px] bg-[var(--surface-1)] border border-dashed border-[var(--line-default)] text-center text-[var(--text-3)] text-xs">
+                    当前节点暂无下游派生节点（可在底部输入框直接发起追问派生）
+                  </div>
+                )}
+
+                {/* 添加下游关联控件 */}
+                <div className="pt-2 border-t border-[var(--line-subtle)] flex items-center gap-2">
+                  <select
+                    value={selectedChildToAdd}
+                    onChange={(e) => setSelectedChildToAdd(e.target.value)}
+                    className="flex-1 px-3 py-1.5 bg-[var(--surface-1)] border border-[var(--line-default)] focus:border-[var(--accent-focus)] rounded-[6px] text-xs text-[var(--text-1)] outline-none cursor-pointer"
+                  >
+                    <option value="">-- 选择已有节点作为下游派生 --</option>
+                    {getAvailableChildCandidates(graph, activeNode.id).map((cand) => (
+                      <option key={cand.id} value={cand.id}>
+                        {cand.title} ({cand.id})
+                      </option>
+                    ))}
+                  </select>
+
+                  <button
+                    type="button"
+                    disabled={!selectedChildToAdd}
+                    onClick={() => {
+                      if (selectedChildToAdd) {
+                        connectNodes(activeNode.id, selectedChildToAdd);
+                        setSelectedChildToAdd('');
+                      }
+                    }}
+                    className="px-3 py-1.5 rounded-[6px] bg-[var(--text-1)] hover:opacity-90 disabled:opacity-40 text-[var(--surface-1)] font-medium text-xs flex items-center gap-1.5 transition-all cursor-pointer disabled:cursor-not-allowed shrink-0"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>关联为下游</span>
+                  </button>
                 </div>
               </div>
             </div>

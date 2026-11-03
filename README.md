@@ -12,7 +12,6 @@
 - **完整的会话生命周期**：支持会话创建、切换、重命名、一键克隆副本、删除以及搜索过滤。
 - 支持单个或多个会话导入/导出 `.canvas.json` 与生成 Markdown 技术复盘报告。
 
-
 ### 2. 认知证据阶梯案卷规范 (Epistemic Hierarchy Prompt Spec)
 彻底告别传统伪造的多轮聊天流，通过 `ContextCompilerTS` 生成单轮文档化案卷：
 - **Tier 1 - 绝对权威**：`<tier1_authoritative_sources>` 包含手动 Pin 置顶节点与外部挂载的资料切片。
@@ -24,9 +23,10 @@
 - 图拓扑遍历、多父节点 DAG 汇聚、多维加权打分及 Token 装箱算法全部移至 **Web Worker**。
 - **200 个节点复杂拓扑编译耗时仅 0.52ms**（实测远低于 5ms 硬约束），画布主线程稳定保持 **60 FPS**。
 
-### 4. 沉浸式双模态交互与流式体验
-- **宏观态微缩胶囊 (Capsule Node)**：固定 `240px × 76px`，展示分类标签、状态边框（⚪ `EXPLORING` / 🟢 `VERIFIED` / 🔴 `DEPRECATED`）与 50 字结论。
-- **微观态阅读抽屉 (Reading Drawer)**：`42vw` 宽度平滑滑出，呈现完整 Markdown、代码高亮与公式。
+### 4. 沉浸式双模态交互与自由拓扑连线
+- **宏观态微缩胶囊 (Capsule Node)**：固定 `240px × 76px`，展示分类标签、几何状态标识（⚪ `EXPLORING` / 🟢 `VERIFIED` / 🔴 `DEPRECATED`）与 50 字结论。
+- **微观态阅读抽屉 (Reading Drawer)**：`42vw` 宽度平滑滑出，呈现完整 Markdown、代码高亮与「拓扑关联」管理专栏。
+- **用户自定义 DAG 连线与防环校验**：支持画布拖拽连线、悬停一键断开（`InteractiveMindMapEdge`）及跨视口搜索连线弹窗（`ConnectNodesModal`），内置实时 BFS 防环检测（`graphTopology.ts`）。
 - **划词即分支 (Highlight-to-Branch)**：划选文本弹出气泡菜单（`[🌱 追问此概念]`、`[💡 举例]`、`[✏️ 自定义]`），一键生成子节点并开启流式推演。
 - **X-Ray 实时光线追踪**：聚焦输入框时，Web Worker 毫秒级计算入选链路，画布节点与连线呈现实线流光/虚线弱光/半透明虚化。
 - **溯源角标跳转 (Citation Navigation)**：回复中的 `[Ref: node_id]` 渲染为交互徽章，点击平滑对焦居中并触发 2 秒蓝色脉冲呼吸灯。
@@ -39,11 +39,11 @@
 
 - **语言与构建**：TypeScript 5.x + Vite 8.x + Tailwind CSS v4
 - **画布引擎**：React Flow v12 (`@xyflow/react`)
-- **图布局引擎**：`@dagrejs/dagre`
+- **图布局与拓扑**：`@dagrejs/dagre` + 自研 DAG 防环拓扑引擎 (`graphTopology.ts`)
 - **并发与算法**：Web Worker API + `js-tiktoken` (cl100k_base)
 - **本地存储**：`zustand` + `dexie` (IndexedDB)
-- **模型支持**：纯前端 Fetch + ReadableStream（内置本地高保真模拟引擎，支持 OpenAI、DeepSeek、Ollama 等）
-- **单元测试与基准**：Vitest
+- **模型支持**：纯前端 Fetch + ReadableStream（内置本地高保真模拟引擎，支持 OpenAI、DeepSeek、SiliconFlow、OpenRouter、Ollama 等）
+- **代码检查与测试**：Oxlint + Vitest
 
 ---
 
@@ -59,9 +59,26 @@ npm run dev
 # 3. 执行测试用例与基准性能测试
 npm test
 
-# 4. 构建生产产物
+# 4. 执行 Oxlint 代码静态检查
+npm run lint
+
+# 5. 构建生产产物
 npm run build
 ```
+
+---
+
+## 🤖 AI 智能体协同研发与文档指引
+
+本项目配备完善的架构规范与智能体研发准则，支持主智能体自由调用 **Gemini 3.8 Flash** 模型并自行配置子智能体（Subagents）并行优化与编写项目代码：
+
+- **[AGENTS.md](./AGENTS.md)**：工作区级 AI 智能体与 Gemini 3.8 Flash 子智能体编排准则（自动加载）。
+- **[HANDOVER.md](./HANDOVER.md)**：项目系统全景交接文档（架构图、源码地图、已完成里程碑与演进路线）。
+- **[md/01_PROJECT_PLAN.md](./md/01_PROJECT_PLAN.md)**：项目里程碑路线图与多智能体迭代规划。
+- **[md/02_ENGINEERING_REQUIREMENTS.md](./md/02_ENGINEERING_REQUIREMENTS.md)**：工程架构规范、核心 TypeScript Schema 与性能红线。
+- **[md/03_DESIGN_SPECIFICATIONS.md](./md/03_DESIGN_SPECIFICATIONS.md)**：认知证据阶梯协议与双模态交互设计规范。
+- **[md/04_ACCEPTANCE_CRITERIA.md](./md/04_ACCEPTANCE_CRITERIA.md)**：TC-01 ~ TC-06 验收标准与量化质量指标。
+- **[md/DESIGN.md](./md/DESIGN.md)**：「触感工坊与精密光学」前端视觉与响应式交互规范。
 
 ---
 
@@ -74,4 +91,4 @@ npm run build
 | **TC-03** | 草稿态隔离与证伪避坑 | 旁系 `exploring` 节点彻底隔离，`deprecated` 注入 `<negative_constraints>` | ✅ Passed (`npm test`) |
 | **TC-04** | 外部挂载资料绝对服从 | `ReferenceChunk` 挂载至节点并以 Tier 1 权威最高优先级注入 | ✅ Passed (`npm test`) |
 | **TC-05** | 引用角标视口精准对焦 | `CitationPill` 驱动 React Flow `setCenter` 600ms 平滑居中 + 2s 脉冲 | ✅ Implemented |
-| **TC-06** | 多父节点汇聚融合 (Merge) | DAG 多父节点拓扑溯源，合并注入 `<tier2_canvas_context>` | ✅ Passed (`npm test`) |
+| **TC-06** | 多父节点汇聚融合 (Merge) | DAG 多父节点拓扑溯源与防环连线校验，合并注入 `<tier2_canvas_context>` | ✅ Passed (`npm test`) |

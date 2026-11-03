@@ -1,7 +1,7 @@
 // components/Canvas/CapsuleNode.tsx
 import React from 'react';
 import { Handle, Position, type NodeProps } from '@xyflow/react';
-import { Pin, Paperclip, Trash2 } from 'lucide-react';
+import { Pin, Paperclip, Trash2, Link2 } from 'lucide-react';
 import type { CanvasNodeData, NodeCategory } from '../../types/canvas';
 import { useCanvasStore } from '../../store/canvasStore';
 
@@ -40,6 +40,7 @@ export const CapsuleNode: React.FC<NodeProps> = React.memo(({ id, data, selected
   const isStreamingHere = useCanvasStore((s) => s.streamingNodeId === id);
   const deleteNode = useCanvasStore((s) => s.deleteNode);
   const selectNode = useCanvasStore((s) => s.selectNode);
+  const openConnectModal = useCanvasStore((s) => s.openConnectModal);
   const isRoot = useCanvasStore((s) => s.graph.rootNodeId === id);
 
   const categoryMeta = CATEGORY_MAP[nodeData.category] || CATEGORY_MAP.concept_qa;
@@ -90,15 +91,16 @@ export const CapsuleNode: React.FC<NodeProps> = React.memo(({ id, data, selected
       onClick={() => selectNode(id)}
       className={`group relative ${
         isRoot ? 'w-[260px] h-[86px]' : 'w-[240px] h-[80px]'
-      } rounded-[12px] border px-3 py-2.5 transition-all duration-200 select-none cursor-pointer flex flex-col justify-between overflow-hidden backdrop-blur-md ${borderClass} ${bgClass} ${selectionClass} ${
+      } rounded-[12px] border px-3 py-2.5 transition-all duration-200 select-none cursor-pointer flex flex-col justify-between overflow-visible backdrop-blur-md ${borderClass} ${bgClass} ${selectionClass} ${
         isTargetOfCitation ? 'citation-target-pulse ring-2 ring-[var(--accent-focus)]' : ''
       } ${isStreamingHere ? 'node-streaming-breathe' : ''} ${xrayClass}`}
     >
-      {/* 输入连接点 (Handle) */}
+      {/* 输入连接点 (Handle: 接入前置依赖) */}
       <Handle
         type="target"
         position={Position.Left}
-        className="!w-1.5 !h-1.5 hover:!w-2.5 hover:!h-2.5 !bg-[var(--line-strong)] hover:!bg-[var(--text-1)] !border-none transition-all"
+        className="!w-2.5 !h-2.5 !-left-1.5 hover:!scale-150 !bg-[var(--line-strong)] hover:!bg-[var(--accent-focus)] !border-2 !border-[var(--surface-1)] transition-all shadow-xs cursor-crosshair"
+        title="接入前置依赖 (拖拽终点)"
       />
 
       {/* 顶部信息行：类别微色条 + 标题 + 几何状态指示器 */}
@@ -119,7 +121,7 @@ export const CapsuleNode: React.FC<NodeProps> = React.memo(({ id, data, selected
           </span>
         </div>
 
-        {/* 右上角纯几何状态图标 (零 Emoji) */}
+        {/* 右上角纯几何状态图标 (零 Emoji) 与快捷操作 */}
         <div className="flex items-center gap-1 shrink-0 text-[var(--text-3)]">
           {nodeData.manualState === 'pinned' && (
             <span title="已置顶参考">
@@ -157,6 +159,19 @@ export const CapsuleNode: React.FC<NodeProps> = React.memo(({ id, data, selected
             </span>
           )}
 
+          {/* 建立连接按钮 (仅 Hover 显示) */}
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              openConnectModal(id);
+            }}
+            className="opacity-0 group-hover:opacity-100 hover:text-[var(--accent-focus)] p-0.5 rounded transition-all ml-0.5 cursor-pointer text-[var(--text-4)]"
+            title="为此节点建立联系 (设置前置或后置)"
+          >
+            <Link2 className="w-3 h-3" strokeWidth={1.6} />
+          </button>
+
           {/* 删除按钮 (仅 Hover 显示) */}
           {!isRoot && (
             <button
@@ -189,11 +204,12 @@ export const CapsuleNode: React.FC<NodeProps> = React.memo(({ id, data, selected
         )}
       </div>
 
-      {/* 输出连接点 (Handle) */}
+      {/* 输出连接点 (Handle: 引出后置派生) */}
       <Handle
         type="source"
         position={Position.Right}
-        className="!w-1.5 !h-1.5 hover:!w-2.5 hover:!h-2.5 !bg-[var(--line-strong)] hover:!bg-[var(--text-1)] !border-none transition-all"
+        className="!w-2.5 !h-2.5 !-right-1.5 hover:!scale-150 !bg-[var(--line-strong)] hover:!bg-[var(--accent-focus)] !border-2 !border-[var(--surface-1)] transition-all shadow-xs cursor-crosshair"
+        title="引出后置派生 (拖拽连线至目标节点)"
       />
     </div>
   );

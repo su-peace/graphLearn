@@ -9,6 +9,8 @@ import { PromptInspectorModal } from './components/Modals/PromptInspectorModal';
 import { SessionManagerModal } from './components/Modals/SessionManagerModal';
 import { DeleteNodeModal } from './components/Modals/DeleteNodeModal';
 import { CreateNodeModal } from './components/Modals/CreateNodeModal';
+import { ConnectNodesModal } from './components/Modals/ConnectNodesModal';
+import { ExportModal } from './components/Modals/ExportModal';
 
 export const App: React.FC = () => {
   const init = useCanvasStore((s) => s.init);
@@ -18,6 +20,8 @@ export const App: React.FC = () => {
   const setIsSessionManagerOpen = useCanvasStore((s) => s.setIsSessionManagerOpen);
   const setNodeToDeleteId = useCanvasStore((s) => s.setNodeToDeleteId);
   const closeCreateNodeModal = useCanvasStore((s) => s.closeCreateNodeModal);
+  const closeConnectModal = useCanvasStore((s) => s.closeConnectModal);
+  const setIsExportModalOpen = useCanvasStore((s) => s.setIsExportModalOpen);
   const deleteNode = useCanvasStore((s) => s.deleteNode);
 
   const navigateFnRef = useRef<((nodeId: string) => void) | null>(null);
@@ -40,6 +44,8 @@ export const App: React.FC = () => {
         setIsInspectorOpen(false);
         setIsSessionManagerOpen(false);
         closeCreateNodeModal();
+        closeConnectModal();
+        setIsExportModalOpen(false);
         setNodeToDeleteId(null);
       } else if ((e.key === 'Delete' || e.key === 'Backspace') && !isInput) {
         const activeNodeId = useCanvasStore.getState().activeNodeId;
@@ -47,6 +53,19 @@ export const App: React.FC = () => {
           deleteNode(activeNodeId);
         }
       }
+
+      // 全局撤销/重做快捷键 (Ctrl+Z / Cmd+Z, Ctrl+Y / Ctrl+Shift+Z)
+      if (!isInput && (e.ctrlKey || e.metaKey)) {
+        const key = e.key.toLowerCase();
+        if (key === 'z' && !e.shiftKey) {
+          e.preventDefault();
+          useCanvasStore.getState().undo();
+        } else if (key === 'y' || (key === 'z' && e.shiftKey)) {
+          e.preventDefault();
+          useCanvasStore.getState().redo();
+        }
+      }
+
       // 快捷键: Ctrl/Cmd + L 自动整理布局, Ctrl/Cmd + Shift + X 触发/关闭 X-Ray
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'l' && !isInput) {
         e.preventDefault();
@@ -63,7 +82,7 @@ export const App: React.FC = () => {
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [closeDrawer, setIsSettingsOpen, setIsInspectorOpen, setIsSessionManagerOpen, setNodeToDeleteId, closeCreateNodeModal, deleteNode]);
+  }, [closeDrawer, setIsSettingsOpen, setIsInspectorOpen, setIsSessionManagerOpen, setNodeToDeleteId, closeCreateNodeModal, closeConnectModal, setIsExportModalOpen, deleteNode]);
 
   const handleRegisterNavigate = useCallback((fn: (nodeId: string) => void) => {
     navigateFnRef.current = fn;
@@ -89,6 +108,9 @@ export const App: React.FC = () => {
       {/* 新建节点模态框 */}
       <CreateNodeModal />
 
+      {/* 建立节点联系模态框 */}
+      <ConnectNodesModal />
+
       {/* 节点删除确认模态框 */}
       <DeleteNodeModal />
 
@@ -100,6 +122,9 @@ export const App: React.FC = () => {
 
       {/* 认知证据阶梯案卷检查器 */}
       <PromptInspectorModal />
+
+      {/* 多格式导出模态框 */}
+      <ExportModal />
     </div>
   );
 };

@@ -19,6 +19,97 @@ const DEFAULT_CATEGORY_WEIGHTS: Record<NodeCategory, number> = {
 };
 
 /**
+ * 提取 Query 关键短语与词符（亚毫秒级纯内存分词与特征提取）
+ * 支持英文单词 (>=2 字符) 与中文 2~4 字词段/滑窗切片，过滤常见无实义助词
+ */
+export function extractQueryKeywords(query?: string): string[] {
+  if (!query) return [];
+  const normalized = query.trim().toLowerCase();
+  if (!normalized) return [];
+
+  const keywords = new Set<string>();
+
+  // 1. 英文与数字标识符 (>= 2 字符)
+  const enMatches = normalized.match(/[a-z0-9_]{2,}/g);
+  if (enMatches) {
+    for (const w of enMatches) {
+      if (w.length >= 2) keywords.add(w);
+    }
+  }
+
+  // 2. 常见无实义助词/疑问词过滤
+  const STOP_WORDS = new Set([
+    '如何', '怎样', '怎么', '什么', '为什么', '哪个', '哪些', '关于',
+    '我们', '可以', '并且', '以及', '或者', '这个', '那个', '这些',
+    '那些', '如果', '为了', '进行', '通过', '对于', '方案', '实现',
+    '一个', '没有', '是否', '因为', '所以', '两者', '结合'
+  ]);
+
+  // 3. 中文字符串分段与切片 (提取 2~4 字有实义短语及滑动窗口)
+  const zhMatches = normalized.match(/[\u4e00-\u9fa5]+/g);
+  if (zhMatches) {
+    for (const seg of zhMatches) {
+      if (seg.length < 2) continue;
+      // 适中长度短语 (2~4 字) 直接作为候选
+      if (seg.length <= 4 && !STOP_WORDS.has(seg)) {
+        keywords.add(seg);
+      }
+      // 生成 2 字和 3 字 n-gram 滑窗
+      for (let i = 0; i <= seg.length - 2; i++) {
+        const gram2 = seg.slice(i, i + 2);
+        if (!STOP_WORDS.has(gram2)) {
+          keywords.add(gram2);
+        }
+        if (i <= seg.length - 3) {
+          const gram3 = seg.slice(i, i + 3);
+          if (!STOP_WORDS.has(gram3)) {
+            keywords.add(gram3);
+          }
+        }
+      }
+    }
+  }
+
+  // 限制最多 30 个关键词，保障亚毫秒速度
+  return Array.from(keywords).slice(0, 30);
+}
+
+/**
+ * 计算节点与当前 Query 的语义关联度加权（Relevance Bonus）
+ * 匹配范围：title, artifact.coreTakeaway, artifact.hardInvariants, artifact.codeSignatures
+ */
+export function calculateRelevanceBonus(node: CanvasNodeData, keywords: string[]): number {
+  if (keywords.length === 0) return 1.0;
+
+  const parts: string[] = [];
+  if (node.title) parts.push(node.title);
+  if (node.artifact) {
+    if (node.artifact.coreTakeaway) parts.push(node.artifact.coreTakeaway);
+    if (node.artifact.hardInvariants && node.artifact.hardInvariants.length > 0) {
+      parts.push(...node.artifact.hardInvariants);
+    }
+    if (node.artifact.codeSignatures && node.artifact.codeSignatures.length > 0) {
+      parts.push(...node.artifact.codeSignatures);
+    }
+  }
+
+  if (parts.length === 0) return 1.0;
+  const searchableText = parts.join(' ').toLowerCase();
+
+  let matchHits = 0;
+  for (const kw of keywords) {
+    if (searchableText.includes(kw)) {
+      matchHits++;
+    }
+  }
+
+  if (matchHits === 0) return 1.0;
+
+  // 命中关键词赋予 1.1x ~ 1.35x 动态加权（基础 1.1x，每多命中一词增加 0.08，最高 1.35x）
+  return Math.min(1.35, 1.0 + 0.1 + matchHits * 0.08);
+}
+
+/**
  * 拓扑图编译核心引擎
  * 可在主线程或 Web Worker 中无差别极速运行（耗时 <1ms）
  */
@@ -33,6 +124,9 @@ export function compileContext(options: CompileOptions): CompilationResult {
 
   const nodes = graph.nodes || {};
   const activeNode = nodes[activeNodeId];
+
+  // 0. 提取当前 Query 关键短语/词符用于语义混合重排 (Hybrid Scoring)
+  const queryKeywords = extractQueryKeywords(currentQuery);
 
   // 1. DAG 多源祖先 Hop 距离计算（支持多父节点汇聚）
   const hopDistances: Map<string, number> = new Map();
@@ -114,7 +208,8 @@ export function compileContext(options: CompileOptions): CompilationResult {
       const hopWeight = 1.0 / (1.0 + effectiveHop * 0.6);
       const catWeight = DEFAULT_CATEGORY_WEIGHTS[node.category] || 1.0;
       const verifiedBonus = node.status === 'verified' ? 1.5 : 1.0;
-      const score = (hopWeight * 2.0 + catWeight) * verifiedBonus;
+      const relevanceBonus = calculateRelevanceBonus(node, queryKeywords);
+      const score = Number(((hopWeight * 2.0 + catWeight) * verifiedBonus * relevanceBonus).toFixed(3));
 
       tier2Candidates.push({ node, hop: effectiveHop, score });
     } else {
@@ -122,10 +217,13 @@ export function compileContext(options: CompileOptions): CompilationResult {
     }
   }
 
-  // 3. 对 Tier 2 候选节点排序（得分由高到低，Hop 优先）
+  // 3. 对 Tier 2 候选节点混合重排（语义关联加权分优先，得分相近时 Hop 越小越靠前）
   tier2Candidates.sort((a, b) => {
-    if (a.hop !== b.hop) return a.hop - b.hop;
-    return b.score - a.score;
+    const diff = b.score - a.score;
+    if (Math.abs(diff) > 0.05) {
+      return diff;
+    }
+    return a.hop - b.hop;
   });
 
   // 4. Token 预算装箱（Knapsack Allocation）

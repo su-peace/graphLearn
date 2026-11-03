@@ -1,7 +1,7 @@
 // tests/contextCompiler.test.ts
 import { describe, it, expect } from 'vitest';
 import { compileContext } from '../src/worker/contextCompiler';
-import type { CanvasGraph, CanvasNodeData } from '../src/types/canvas';
+import type { CanvasGraph } from '../src/types/canvas';
 import { INITIAL_DEMO_GRAPH } from '../src/data/demoGraph';
 import { extractArtifactFromContent } from '../src/services/artifactExtractor';
 

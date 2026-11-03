@@ -6,10 +6,8 @@ import {
   Eye,
   Settings,
   FileCode2,
-  Download,
   Upload,
   RotateCcw,
-  FileText,
   Cpu,
   ChevronDown,
   Check,
@@ -17,6 +15,10 @@ import {
   X,
   Sun,
   Moon,
+  Link2,
+  Undo2,
+  Redo2,
+  Share2,
 } from 'lucide-react';
 import { useCanvasStore } from '../../store/canvasStore';
 import { PROVIDER_DEFINITIONS } from '../../services/providerConfigs';
@@ -26,15 +28,19 @@ export const Toolbar: React.FC = () => {
   const graph = useCanvasStore((s) => s.graph);
   const autoLayout = useCanvasStore((s) => s.autoLayout);
   const openCreateNodeModal = useCanvasStore((s) => s.openCreateNodeModal);
+  const openConnectModal = useCanvasStore((s) => s.openConnectModal);
   const isXrayActive = useCanvasStore((s) => s.isXrayActive);
   const triggerXrayPreview = useCanvasStore((s) => s.triggerXrayPreview);
   const clearXrayPreview = useCanvasStore((s) => s.clearXrayPreview);
   const setIsSettingsOpen = useCanvasStore((s) => s.setIsSettingsOpen);
   const setIsInspectorOpen = useCanvasStore((s) => s.setIsInspectorOpen);
   const setIsSessionManagerOpen = useCanvasStore((s) => s.setIsSessionManagerOpen);
+  const setIsExportModalOpen = useCanvasStore((s) => s.setIsExportModalOpen);
+  const canUndo = useCanvasStore((s) => s.canUndo);
+  const canRedo = useCanvasStore((s) => s.canRedo);
+  const undo = useCanvasStore((s) => s.undo);
+  const redo = useCanvasStore((s) => s.redo);
   const resetToDemo = useCanvasStore((s) => s.resetToDemo);
-  const exportGraphJson = useCanvasStore((s) => s.exportGraphJson);
-  const exportMarkdownReport = useCanvasStore((s) => s.exportMarkdownReport);
   const importGraphJson = useCanvasStore((s) => s.importGraphJson);
   const llmSettings = useCanvasStore((s) => s.llmSettings);
   const updateSettings = useCanvasStore((s) => s.updateSettings);
@@ -63,28 +69,6 @@ export const Toolbar: React.FC = () => {
 
   const handleCreateNode = () => {
     openCreateNodeModal();
-  };
-
-  const handleDownloadJson = () => {
-    const jsonStr = exportGraphJson();
-    const blob = new Blob([jsonStr], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${graph.title.replace(/\s+/g, '_')}.canvas.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-  };
-
-  const handleDownloadMarkdown = () => {
-    const mdStr = exportMarkdownReport();
-    const blob = new Blob([mdStr], { type: 'text/markdown' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${graph.title.replace(/\s+/g, '_')}_复盘报告.md`;
-    a.click();
-    URL.revokeObjectURL(url);
   };
 
   const handleImportFile = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -175,6 +159,36 @@ export const Toolbar: React.FC = () => {
 
         {/* 中间：核心画布工具组 (精密圆角悬浮栏) */}
         <nav className="flex items-center gap-1 p-1 h-11 rounded-full glass shadow-sm pointer-events-auto text-xs">
+          {/* 撤销 (Undo) */}
+          <button
+            onClick={undo}
+            disabled={!canUndo}
+            className={`p-2 rounded-full transition-colors cursor-pointer ${
+              canUndo
+                ? 'hover:bg-[var(--surface-3)] text-[var(--text-2)] hover:text-[var(--text-1)]'
+                : 'text-[var(--text-4)] opacity-40 cursor-not-allowed pointer-events-none'
+            }`}
+            title="撤销 (快捷键: Ctrl+Z / Cmd+Z)"
+          >
+            <Undo2 className="w-3.5 h-3.5" strokeWidth={1.8} />
+          </button>
+
+          {/* 重做 (Redo) */}
+          <button
+            onClick={redo}
+            disabled={!canRedo}
+            className={`p-2 rounded-full transition-colors cursor-pointer ${
+              canRedo
+                ? 'hover:bg-[var(--surface-3)] text-[var(--text-2)] hover:text-[var(--text-1)]'
+                : 'text-[var(--text-4)] opacity-40 cursor-not-allowed pointer-events-none'
+            }`}
+            title="重做 (快捷键: Ctrl+Y / Ctrl+Shift+Z)"
+          >
+            <Redo2 className="w-3.5 h-3.5" strokeWidth={1.8} />
+          </button>
+
+          <div className="w-px h-3.5 bg-[var(--line-default)] mx-0.5" />
+
           {/* 整理排版 (Dagre) */}
           <button
             onClick={autoLayout}
@@ -193,6 +207,16 @@ export const Toolbar: React.FC = () => {
           >
             <Plus className="w-3.5 h-3.5" strokeWidth={2} />
             <span>新建</span>
+          </button>
+
+          {/* 建立节点联系 */}
+          <button
+            onClick={() => openConnectModal()}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full hover:bg-[var(--surface-3)] text-[var(--text-2)] hover:text-[var(--text-1)] transition-colors cursor-pointer"
+            title="为节点之间建立联系 (建立 DAG 前置/后置拓扑)"
+          >
+            <Link2 className="w-3.5 h-3.5 text-[var(--accent-focus)]" strokeWidth={1.8} />
+            <span className="font-medium hidden sm:inline">连线</span>
           </button>
 
           <div className="w-px h-3.5 bg-[var(--line-default)] mx-0.5" />
@@ -333,22 +357,14 @@ export const Toolbar: React.FC = () => {
             )}
           </button>
 
-          {/* 导出 JSON */}
+          {/* 导出图谱与推演报告 (Mermaid / OPML / Markdown / JSON) */}
           <button
-            onClick={handleDownloadJson}
-            className="p-2 rounded-full hover:bg-[var(--surface-3)] text-[var(--text-2)] hover:text-[var(--text-1)] transition-colors cursor-pointer"
-            title="导出 .canvas.json"
+            onClick={() => setIsExportModalOpen(true)}
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full hover:bg-[var(--surface-3)] text-[var(--text-2)] hover:text-[var(--text-1)] transition-colors cursor-pointer"
+            title="导出图谱与推演报告 (Mermaid / OPML / Markdown / JSON)"
           >
-            <Download className="w-3.5 h-3.5" strokeWidth={1.6} />
-          </button>
-
-          {/* 导出 Markdown */}
-          <button
-            onClick={handleDownloadMarkdown}
-            className="p-2 rounded-full hover:bg-[var(--surface-3)] text-[var(--text-2)] hover:text-[var(--text-1)] transition-colors cursor-pointer"
-            title="导出 Markdown 复盘手稿"
-          >
-            <FileText className="w-3.5 h-3.5" strokeWidth={1.6} />
+            <Share2 className="w-3.5 h-3.5 text-[var(--accent-focus)]" strokeWidth={1.8} />
+            <span className="font-medium hidden md:inline">导出</span>
           </button>
 
           {/* 导入 JSON */}

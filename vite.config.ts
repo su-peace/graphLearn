@@ -81,4 +81,48 @@ function llmProxyPlugin(): Plugin {
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [tailwindcss(), react(), llmProxyPlugin()],
+  build: {
+    chunkSizeWarningLimit: 6000,
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            if (id.includes('js-tiktoken')) {
+              return 'vendor-tiktoken';
+            }
+            if (id.includes('lucide-react')) {
+              return 'vendor-lucide';
+            }
+            if (id.includes('react-markdown') || id.includes('remark-gfm')) {
+              return 'vendor-markdown';
+            }
+            if (id.includes('@xyflow') || id.includes('@dagrejs')) {
+              return 'vendor-xyflow';
+            }
+            if (id.includes('dexie')) {
+              return 'vendor-dexie';
+            }
+            if (id.includes('react') || id.includes('react-dom') || id.includes('scheduler')) {
+              return 'vendor-react';
+            }
+          }
+        },
+      },
+    },
+  },
+  worker: {
+    format: 'es',
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            if (id.includes('js-tiktoken')) {
+              return 'worker-tiktoken';
+            }
+          }
+        },
+      },
+    },
+  },
 })
+

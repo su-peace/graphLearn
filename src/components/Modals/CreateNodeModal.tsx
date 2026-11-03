@@ -1,5 +1,5 @@
 // components/Modals/CreateNodeModal.tsx
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   X,
   Plus,
@@ -28,8 +28,7 @@ const PROMPT_SHORTCUTS = [
   { label: '异常避坑', query: '深度剖析在高并发或极端异常场景下的排障与避坑指南' },
 ];
 
-export const CreateNodeModal: React.FC = () => {
-  const isCreateNodeOpen = useCanvasStore((s) => s.isCreateNodeOpen);
+const CreateNodeModalContent: React.FC = () => {
   const closeCreateNodeModal = useCanvasStore((s) => s.closeCreateNodeModal);
   const createNodeParentId = useCanvasStore((s) => s.createNodeParentId);
   const activeNodeId = useCanvasStore((s) => s.activeNodeId);
@@ -39,23 +38,12 @@ export const CreateNodeModal: React.FC = () => {
   const [title, setTitle] = useState('');
   const [userQuery, setUserQuery] = useState('');
   const [category, setCategory] = useState<NodeCategory>('concept_qa');
-  const [selectedParentId, setSelectedParentId] = useState<string>('');
+  const [selectedParentIds, setSelectedParentIds] = useState<string[]>(() => {
+    const rootNode = Object.values(graph.nodes).find((n) => n.category === 'root_goal');
+    const defaultParent = createNodeParentId || activeNodeId || rootNode?.id || '';
+    return defaultParent ? [defaultParent] : [];
+  });
   const [autoTriggerStream, setAutoTriggerStream] = useState(true);
-
-  // 初始化父节点选择器
-  useEffect(() => {
-    if (isCreateNodeOpen) {
-      const rootNode = Object.values(graph.nodes).find((n) => n.category === 'root_goal');
-      const defaultParent = createNodeParentId || activeNodeId || rootNode?.id || '';
-      setSelectedParentId(defaultParent);
-      setTitle('');
-      setUserQuery('');
-      setCategory('concept_qa');
-      setAutoTriggerStream(true);
-    }
-  }, [isCreateNodeOpen, createNodeParentId, activeNodeId, graph.nodes]);
-
-  if (!isCreateNodeOpen) return null;
 
   const handleSubmit = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -63,11 +51,10 @@ export const CreateNodeModal: React.FC = () => {
 
     const finalQuery =
       userQuery.trim() || `关于「${title.trim()}」的技术机理与设计权衡是什么？`;
-    const parentIds = selectedParentId ? [selectedParentId] : [];
 
     await addNode({
       title: title.trim(),
-      parentIds,
+      parentIds: selectedParentIds,
       userQuery: finalQuery,
       category,
       autoTriggerStream,
@@ -171,23 +158,66 @@ export const CreateNodeModal: React.FC = () => {
 
           {/* 关联父节点与分类选择 (双栏排版) */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
-            {/* 上级父节点 */}
+            {/* 上级父节点 (支持多父节点 DAG 汇聚) */}
             <div className="space-y-1.5">
-              <label className="font-semibold text-[var(--text-1)] flex items-center gap-1.5">
-                <GitFork className="w-3.5 h-3.5 text-[var(--accent-focus)]" />
-                <span>上级承接节点 (Parent)</span>
-              </label>
+              <div className="flex items-center justify-between">
+                <label className="font-semibold text-[var(--text-1)] flex items-center gap-1.5">
+                  <GitFork className="w-3.5 h-3.5 text-[var(--accent-focus)]" />
+                  <span>上级承接节点 (Parents)</span>
+                </label>
+                <span className="text-[10px] text-[var(--text-3)]">
+                  {selectedParentIds.length} 个前置
+                </span>
+              </div>
+
+              {/* 已选父节点标签 */}
+              <div className="flex flex-wrap gap-1 min-h-[32px] p-1.5 bg-[var(--surface-1)] border border-[var(--line-default)] rounded-[8px]">
+                {selectedParentIds.length === 0 && (
+                  <span className="text-[11px] text-[var(--text-3)] py-0.5 px-1">
+                    (独立根节点，无前置)
+                  </span>
+                )}
+                {selectedParentIds.map((pid) => {
+                  const node = graph.nodes[pid];
+                  return (
+                    <span
+                      key={pid}
+                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-[4px] bg-[var(--surface-2)] border border-[var(--line-subtle)] text-[11px] text-[var(--text-1)] font-medium max-w-[180px]"
+                    >
+                      <span className="truncate">{node?.title || pid}</span>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setSelectedParentIds((prev) => prev.filter((id) => id !== pid))
+                        }
+                        className="text-[var(--text-3)] hover:text-rose-500 cursor-pointer ml-0.5"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </span>
+                  );
+                })}
+              </div>
+
+              {/* 添加更多父节点下拉框 */}
               <select
-                value={selectedParentId}
-                onChange={(e) => setSelectedParentId(e.target.value)}
-                className="w-full px-3 py-2 bg-[var(--surface-1)] border border-[var(--line-default)] focus:border-[var(--accent-focus)] rounded-[8px] text-[var(--text-1)] outline-none text-xs cursor-pointer"
+                value=""
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (val && !selectedParentIds.includes(val)) {
+                    setSelectedParentIds((prev) => [...prev, val]);
+                  }
+                }}
+                className="w-full px-2.5 py-1.5 bg-[var(--surface-1)] border border-[var(--line-subtle)] focus:border-[var(--accent-focus)] rounded-[6px] text-[var(--text-2)] outline-none text-xs cursor-pointer"
               >
-                <option value="">(无父级 - 作为独立根节点)</option>
-                {allNodesList.map((n) => (
-                  <option key={n.id} value={n.id}>
-                    {n.title || n.id} ({n.id})
-                  </option>
-                ))}
+                <option value="">+ 添加关联父节点 (多父汇聚)...</option>
+                {allNodesList
+                  .filter((n) => !selectedParentIds.includes(n.id))
+                  .map((n) => (
+                    <option key={n.id} value={n.id}>
+                      {n.title || n.id} ({n.id})
+                    </option>
+                  ))}
               </select>
             </div>
 
@@ -262,4 +292,12 @@ export const CreateNodeModal: React.FC = () => {
       </div>
     </div>
   );
+};
+
+export const CreateNodeModal: React.FC = () => {
+  const isCreateNodeOpen = useCanvasStore((s) => s.isCreateNodeOpen);
+
+  if (!isCreateNodeOpen) return null;
+
+  return <CreateNodeModalContent />;
 };
